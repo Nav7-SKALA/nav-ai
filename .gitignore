@@ -6,3 +6,6 @@ config.py
 # Poetry 환경 캐시
 poetry.lock
 pyproject.toml
+
+# env
+.env
