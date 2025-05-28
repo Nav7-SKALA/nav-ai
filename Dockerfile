@@ -10,10 +10,10 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # 4. Poetry 설치
-RUN pip install --upgrade pip poetry
+RUN pip install poetry --break-system-packages
 
 # 5. 의존성 정의 복사 & 설치
-COPY pyproject.toml poetry.lock ./
+COPY ../pyproject.toml ../poetry.lock ./
 RUN poetry config virtualenvs.create false \
  && poetry install --no-dev --no-interaction --no-ansi
 
