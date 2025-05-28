@@ -5,8 +5,8 @@ pipeline {
         GIT_URL = 'https://github.com/Nav7-SKALA/nav-ai.git'
         GIT_BRANCH = 'main'
         GIT_ID = 'skala-github-id'
-        GIT_USER_NAME = 'Nav7-SKALA'           // 이거 추가
-        GIT_USER_EMAIL = 'dannysmson@naver.com'   // 이거 추가
+        GIT_USER_NAME = 'ilikewhale'           // 이거 추가
+        GIT_USER_EMAIL = 'rla0576@naver.com'   // 이거 추가
         IMAGE_REGISTRY = 'amdp-registry.skala-ai.com/skala25a'
         IMAGE_NAME = 'sk-nav7-ai'
         IMAGE_TAG = '1.0.0'
