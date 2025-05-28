@@ -9,6 +9,8 @@ config.py
 
 # env
 .env
-pyproject.toml
-poetry.lock
 
+
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
