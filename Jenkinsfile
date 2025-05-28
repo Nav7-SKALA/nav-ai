@@ -27,7 +27,7 @@ pipeline {
                         curl -sSL https://install.python-poetry.org | python3 -
                     fi
                     export PATH="$HOME/.local/bin:$PATH"
-                    poetry install --only=main --no-interaction --no-ansi
+                    poetry install --only=main --no-interaction --no-ansi --no-root
                     poetry run pytest --maxfail=1 --disable-warnings -q
                 '''
             }
