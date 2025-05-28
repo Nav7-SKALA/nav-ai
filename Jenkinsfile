@@ -35,11 +35,35 @@ pipeline {
             }
         }
 
-        stage('Update Deploy Config') {
+        stage('Update deploy.yaml and Git Push') {
             steps {
-                sh """
-                    sed -i 's|image:.*|image: ${IMAGE_REGISTRY}/${IMAGE_NAME}:${env.FINAL_IMAGE_TAG}|g' ./k8s/deploy.yaml
-                """
+                script {
+                    def newImageLine = "          image: ${env.IMAGE_REGISTRY}/${env.IMAGE_NAME}:${env.FINAL_IMAGE_TAG}"
+                    def gitRepoPath = env.GIT_URL.replaceFirst(/^https?:\/\//, '')
+
+                    sh """
+                        sed -i 's|^[[:space:]]*image:.*\$|${newImageLine}|g' ./k8s/deploy.yaml
+                        cat ./k8s/deploy.yaml
+                    """
+
+                    sh """
+                        git config user.name "$GIT_USER_NAME"
+                        git config user.email "$GIT_USER_EMAIL"
+                        git add ./k8s/deploy.yaml || true
+                    """
+
+                    withCredentials([usernamePassword(credentialsId: "${env.GIT_ID}", usernameVariable: 'GIT_PUSH_USER', passwordVariable: 'GIT_PUSH_PASSWORD')]) {
+                        sh """
+                            if ! git diff --cached --quiet; then
+                                git commit -m "[AUTO] Update deploy.yaml with image ${env.FINAL_IMAGE_TAG}"
+                                git remote set-url origin https://${GIT_PUSH_USER}:${GIT_PUSH_PASSWORD}@${gitRepoPath}
+                                git push origin ${env.GIT_BRANCH}
+                            else
+                                echo "No changes to commit."
+                            fi
+                        """
+                    }
+                }
             }
         }
     }
