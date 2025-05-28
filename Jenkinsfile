@@ -25,7 +25,6 @@ pipeline {
     stage('Install Python Dependencies and Run Tests') {
         steps {
             sh '''
-                pip install --upgrade pip
                 pip install poetry
 
                 poetry run pytest --maxfail=1 --disable-warnings -q
