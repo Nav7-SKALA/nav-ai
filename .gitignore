@@ -9,3 +9,6 @@ pyproject.toml
 
 # env
 .env
+pyproject.toml
+poetry.lock
+
