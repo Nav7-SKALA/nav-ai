@@ -8,9 +8,10 @@ RUN apt-get update && \
 
 RUN pip install poetry --break-system-packages
 
+COPY 
+
 COPY pyproject.toml poetry.lock ./
 
-RUN poetry config virtualenvs.create false && \
     poetry install --only=main --no-interaction --no-ansi --no-root
 
 COPY . .

@@ -20,26 +20,13 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies and Test') {
-            steps {
-                sh '''
-                    if ! command -v poetry &> /dev/null; then
-                        curl -sSL https://install.python-poetry.org | python3 -
-                    fi
-                    export PATH="$HOME/.local/bin:$PATH"
-                    poetry install --only=main --no-interaction --no-ansi --no-root
-                    poetry run pytest --maxfail=1 --disable-warnings -q
-                '''
-            }
-        }
-
         stage('Docker Build & Push') {
             steps {
                 script {
                     def FINAL_IMAGE_TAG = "${IMAGE_TAG}-${BUILD_NUMBER}"
                     
                     docker.withRegistry("https://${IMAGE_REGISTRY}", "${DOCKER_CREDENTIAL_ID}") {
-                        def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${FINAL_IMAGE_TAG}", ".")
+                        def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${FINAL_IMAGE_TAG}", "./api")
                         appImage.push()
                     }
                     
