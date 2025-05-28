@@ -3,9 +3,9 @@ config.py
 # VSCode 설정
 .vscode/
 
-# Poetry 환경 캐시
-poetry.lock
-pyproject.toml
+# # Poetry 환경 캐시
+# poetry.lock
+# pyproject.toml
 
 # env
 .env

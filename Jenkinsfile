@@ -24,14 +24,11 @@ pipeline {
 
     stage('Install Python Dependencies and Run Tests') {
         steps {
-            sh '''python3 -m venv .venv
-
-                . .venv/bin/activate
-
+            sh '''
                 pip install --upgrade pip
-                pip install -r api/requirements.txt
+                pip install poetry
 
-                pytest --maxfail=1 --disable-warnings -q
+                poetry run pytest --maxfail=1 --disable-warnings -q
             '''
         }
     }
