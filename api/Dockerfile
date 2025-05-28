@@ -13,4 +13,4 @@ COPY fastserver.py .
 
 EXPOSE 8000
 
-CMD ["python", "/app/fastsever.py"]
+CMD ["python", "fastsever.py"]
