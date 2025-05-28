@@ -24,14 +24,13 @@ pipeline {
 
     stage('Install Python Dependencies and Run Tests') {
         steps {
-            sh '''
-                python3 -m venv .venv
+            sh 'python3 -m venv .venv
 
                 . .venv/bin/activate
 
                 pip install --upgrade pip
                 pip install -r api/requirements.txt
-                
+
                 pytest --maxfail=1 --disable-warnings -q
             '''
         }
