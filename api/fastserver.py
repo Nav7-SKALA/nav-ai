@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-app = FastAPI(docs_url='/apis/docs', Swagger_url="/apis/openai.json")
+app = FastAPI(docs_url="/apis/docs",openapi_url="/apis/openapi.json")
 
 
 @app.get("/")
