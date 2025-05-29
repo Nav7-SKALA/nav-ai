@@ -28,7 +28,7 @@ pipeline {
                     def FINAL_IMAGE_TAG = "${IMAGE_TAG}-${BUILD_NUMBER}"
                     
                     docker.withRegistry("https://${IMAGE_REGISTRY}", "${DOCKER_CREDENTIAL_ID}") {
-                        def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${FINAL_IMAGE_TAG}", "./api")
+                        def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${FINAL_IMAGE_TAG}", "./api","--platform=linux/amd64 .")
                         appImage.push()
                     }
                     
