@@ -3,7 +3,7 @@ from fastapi import FastAPI
 app = FastAPI(docs_url="/apis/docs",openapi_url="/apis/openapi.json")
 
 
-@app.get("/")
+@app.get("/apis/")
 async def read_root():
     return {"Hello": "World"}
 
