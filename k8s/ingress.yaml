@@ -35,7 +35,7 @@ spec:
   tls:
     - hosts:
         - sk-nav7.skala25a.project.skala-ai.com
-      secretName: sk-nav7-manual-tls-secret (편집됨) 
+      secretName: sk-nav7-manual-tls-secret
 
 
 

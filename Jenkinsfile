@@ -22,20 +22,26 @@ pipeline {
             }
         }
 
-        stage('Docker Build & Push') {
-            steps {
-                script {
-                    def FINAL_IMAGE_TAG = "${IMAGE_TAG}-${BUILD_NUMBER}"
-                    
-                    docker.withRegistry("https://${IMAGE_REGISTRY}", "${DOCKER_CREDENTIAL_ID}") {
-                        def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${FINAL_IMAGE_TAG}", "./api")
-                        appImage.push()
+    stage('Docker Build & Push') {
+                steps {
+                    script {
+                        // 해시코드 12자리 생성
+                        def hashcode = sh(
+                            script: "date +%s%N | sha256sum | cut -c1-12",
+                            returnStdout: true
+                        ).trim()
+                        // Build Number + Hash Code 조합 (IMAGE_TAG는 유지)
+                        def FINAL_IMAGE_TAG = "${IMAGE_TAG}-${BUILD_NUMBER}-${hashcode}"
+                        echo "Final Image Tag: ${FINAL_IMAGE_TAG}"
+                        docker.withRegistry("https://${IMAGE_REGISTRY}", "${DOCKER_CREDENTIAL_ID}") {
+                            def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${FINAL_IMAGE_TAG}", "--platform linux/amd64 .")
+                            appImage.push()
+                        }
+                        // 최종 이미지 태그를 env에 등록 (나중에 deploy.yaml 수정에 사용)
+                        env.FINAL_IMAGE_TAG = FINAL_IMAGE_TAG
                     }
-                    
-                    env.FINAL_IMAGE_TAG = FINAL_IMAGE_TAG
                 }
             }
-        }
 
         stage('Update deploy.yaml and Git Push') {
             steps {
