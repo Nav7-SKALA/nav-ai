@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
-app = FastAPI(docs_url='/apis', redoc_url=None)
+app = FastAPI(docs_url='/apis/docs', Swagger_url="/apis/openai.json")
+
 
 @app.get("/")
 async def read_root():
