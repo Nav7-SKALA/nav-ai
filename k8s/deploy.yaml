@@ -18,7 +18,8 @@ spec:
       serviceAccountName: default
       containers:
         - name: nav7-ai
-          image: amdp-registry.skala-ai.com/skala25a/sk-nav7-ai:1.0.0-20
+          image: amdp-registry.skala-ai.com/skala25a/sk-nav7-ai:1.0.0-21
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           env:

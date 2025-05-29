@@ -22,6 +22,7 @@ pipeline {
             }
         }
 
+<<<<<<< HEAD
     stage('Docker Build & Push') {
                 steps {
                     script {
@@ -39,6 +40,7 @@ pipeline {
                         }
                         // 최종 이미지 태그를 env에 등록 (나중에 deploy.yaml 수정에 사용)
                         env.FINAL_IMAGE_TAG = FINAL_IMAGE_TAG
+
                     }
                 }
             }
