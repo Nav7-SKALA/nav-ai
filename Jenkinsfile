@@ -22,7 +22,6 @@ pipeline {
             }
         }
 
-<<<<<<< HEAD
     stage('Docker Build & Push') {
                 steps {
                     script {
