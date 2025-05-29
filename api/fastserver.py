@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+app = FastAPI(docs_url='/apis', redoc_url=None)
 
 @app.get("/")
 async def read_root():
