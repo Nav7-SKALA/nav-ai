@@ -9,8 +9,6 @@ from langchain_core.output_parsers import StrOutputParser
 from prompt import roleModel_prompt
 from config import MODEL_NAME, TEMPERATURE
 
-
-
 # 환경변수 로드
 load_dotenv()
 
@@ -28,7 +26,7 @@ roleModel_chain = PromptTemplate.from_template(roleModel_prompt) | llm | StrOutp
 def roleModel_invoke(state: dict, config=None) -> dict:
     """roleModel Chain 실행 함수"""
 
-    messages_Text = "\n".join([
+    messages_text = "\n".join([
         msg.content for msg in state.get("messages", [])
         if hasattr(msg, 'content')
     ])
@@ -41,7 +39,7 @@ def roleModel_invoke(state: dict, config=None) -> dict:
         "information": information
     })
 
-    new_messages = list(state.get("messages", []))
+    new_messages = [] #list(state.get("messages", []))
     new_messages.append(AIMessage(content=result, name="RoleModel"))
 
     return {
@@ -52,3 +50,9 @@ def roleModel_invoke(state: dict, config=None) -> dict:
 def roleModel_node(state):
     """RoleModel 노드 함수"""
     return roleModel_invoke(state)
+
+if __name__ == "__main__":
+    # 테스트
+    test_state = {"messages": [HumanMessage(content="cloud PM 롤모델 찾아줘")]}
+    result = roleModel_invoke(test_state)
+    print(result["messages"][-1].content)

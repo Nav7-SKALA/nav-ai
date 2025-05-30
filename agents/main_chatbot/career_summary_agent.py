@@ -1,12 +1,16 @@
 import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 from prompt import careerSummary_prompt
 from config import MODEL_NAME, TEMPERATURE
+
+import sys
+# 현재 파일의 상위 디렉토리 (nav-ai)를 sys.path에 추가
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from tools.google_news_tool import google_news_search
 from tools.vector_search_tool import vectorDB_search
@@ -47,7 +51,7 @@ def careerSummary_invoke(state: dict, config=None) -> dict:
         "information": ""
     })
     
-    new_messages = list(state.get("messages", []))
+    new_messages = [] #list(state.get("messages", []))
     new_messages.append(AIMessage(content=result, name="CareerSummary"))
     
     return {
@@ -58,3 +62,10 @@ def careerSummary_invoke(state: dict, config=None) -> dict:
 def careerSummary_node(state):
     """CareerSummary 노드 함수"""
     return careerSummary_invoke(state)
+
+
+if __name__ == "__main__":
+    # 테스트
+    test_state = {"messages": [HumanMessage(content="AI PM 되려면 어떻게 해야 해?")]}
+    result = careerSummary_invoke(test_state)
+    print(result["messages"][-1].content)

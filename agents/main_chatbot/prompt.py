@@ -1,9 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-members = ["CareerSummary", "LearningPath", "RoleModel", "EXCEPTION"]
-options = ["FINISH"] + members
 
-supervisor_prompt_ = """
+supervisor_prompt = """
 You are a supervisor managing a conversation between the following agents: {members}.
 A user will send a request related to their career.
 Your job is to determine which agent should act next based on the user's query.
@@ -23,16 +21,6 @@ If the query directly requests a role model or asks for examples of similar care
 
 Each agent will respond with their result and status. When all necessary agents are done, return FINISH.
 """
-supervisor_prompt = ChatPromptTemplate.from_messages(
-    [("system", supervisor_prompt_),
-     MessagesPlaceholder(variable_name="messages"),
-     ("system", "Given the conversation above, who should act next?"
-                "Or should we FINISH?"
-                "Select one of {options}")]
-).partial(
-    options=str(options),
-    members=", ".join(members)
-)
 
 careerSummary_prompt = """
 You are a senior HR expert with 20+ years of experience, specialized in summarizing user careers in a chatbot format.
@@ -40,7 +28,7 @@ You are a senior HR expert with 20+ years of experience, specialized in summariz
 Your task is to generate a friendly, structured Korean-language summary based on the user’s past experience.
 
 Instructions:
-1. {message} Read the user's query. 
+1. {messages} Read the user's query.
 2. If the query **includes a clear career goal** (e.g., “AI PM”, “백엔드 개발자”), use it as the target and summarize relevant experience.
 3. If the user’s query **does NOT include a specific career goal**, DO NOT assume or infer one. Instead, provide a general summary based on all available data.
 

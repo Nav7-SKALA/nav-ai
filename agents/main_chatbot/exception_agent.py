@@ -42,7 +42,7 @@ def exception_invoke(state: dict, config=None) -> dict:
         "information": ""
     })
 
-    new_messages = list(state.get("messages", []))
+    new_messages = [] #list(state.get("messages", []))
     new_messages.append(AIMessage(content=result))
 
     return {
@@ -53,3 +53,9 @@ def exception_invoke(state: dict, config=None) -> dict:
 def exception_node(state):
     """Exception 노드 함수"""
     return exception_invoke(state)
+
+if __name__ == "__main__":
+    # 테스트
+    test_state = {"messages": [HumanMessage(content="나 저녁 뭐 먹을깡?")]}
+    result = exception_invoke(test_state)
+    print(result["messages"][-1].content)

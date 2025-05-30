@@ -1,15 +1,23 @@
 import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 from config import MODEL_NAME, TEMPERATURE
 from prompt import learningPath_prompt
+
+import sys
+# 현재 파일의 상위 디렉토리 (nav-ai)를 sys.path에 추가
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 from tools.web_search_tool import *
 from tools.google_news_tool import google_news_search
 
+
+# 현재 파일의 상위 디렉토리 (nav-ai)를 sys.path에 추가
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 # 환경변수 로드
 load_dotenv()
@@ -68,8 +76,8 @@ def learningPath_invoke(state: dict, config=None) -> dict:
     except Exception as e:
         response_text = f"학습 경로 추천 중 오류가 발생했습니다: {str(e)}"
     
-    new_messages = list(state.get("messages", []))
-    new_messages.append(HumanMessage(content=response_text, name="LearningPath"))
+    new_messages = []#list(state.get("messages", []))
+    new_messages.append(AIMessage(content=response_text, name="LearningPath"))
     
     return {
         **state,
@@ -79,6 +87,7 @@ def learningPath_invoke(state: dict, config=None) -> dict:
 def learningPath_node(state):
     """LearningPath 노드 함수"""
     return learningPath_invoke(state)
+
 
 if __name__ == "__main__":
     # 테스트
