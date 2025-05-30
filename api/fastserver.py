@@ -3,9 +3,23 @@ import uvicorn
 
 app = FastAPI(docs_url="/apis/docs", openapi_url="/apis/openapi.json")
 
-@app.post("/apis/v1/career-path")
-def career_path():
-    return "커리어추천: cloud 강의 듣기"
+# @app.post("/apis/v1/career-path")
+# def career_path():
+#     return "커리어추천: cloud 강의 듣기"
+
+from typing import TypedDict
+# Response 정의
+class career_path_response(TypedDict):
+    user_query: str
+    user_id: str
+
+@app.post("/apis/v1/career-path", response_model=career_path_response)
+def career_path(request: career_path_response):
+    """메인 챗봇 API"""
+
+    return {"agent": "CAREER_SUMMARY",
+            "maps": {"summary": "test string"}}
+
 
 @app.post("/apis/v1/rolemodel")
 def rolemodel():
