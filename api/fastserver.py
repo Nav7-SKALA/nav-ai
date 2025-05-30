@@ -8,12 +8,12 @@ app = FastAPI(docs_url="/apis/docs", openapi_url="/apis/openapi.json")
 #     return "커리어추천: cloud 강의 듣기"
 
 from pydantic import BaseModel
-# Response 정의
+# Request 정의
 class career_path_response(BaseModel):
     user_query: str
     user_id: str
 
-@app.post("/apis/v1/career-path", response_model=career_path_response)
+@app.post("/apis/v1/career-path")
 def career_path(request: career_path_response):
     """메인 챗봇 API"""
 
