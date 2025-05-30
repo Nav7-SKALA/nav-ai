@@ -7,9 +7,9 @@ app = FastAPI(docs_url="/apis/docs", openapi_url="/apis/openapi.json")
 # def career_path():
 #     return "커리어추천: cloud 강의 듣기"
 
-from typing import TypedDict
+from pydantic import BaseModel
 # Response 정의
-class career_path_response(TypedDict):
+class career_path_response(BaseModel):
     user_query: str
     user_id: str
 
