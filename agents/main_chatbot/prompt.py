@@ -1,7 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-from langgraph import options, members
-
+members = ["CareerSummary", "LearningPath", "RoleModel", "EXCEPTION"]
+options = ["FINISH"] + members
 
 supervisor_prompt_ = """
 You are a supervisor managing a conversation between the following agents: {members}.
@@ -29,7 +29,7 @@ supervisor_prompt = ChatPromptTemplate.from_messages(
      ("system", "Given the conversation above, who should act next?"
                 "Or should we FINISH?"
                 "Select one of {options}")]
-).pratial(
+).partial(
     options=str(options),
     members=", ".join(members)
 )
@@ -40,7 +40,7 @@ You are a senior HR expert with 20+ years of experience, specialized in summariz
 Your task is to generate a friendly, structured Korean-language summary based on the user’s past experience.
 
 Instructions:
-1. Read the user's query.
+1. {message} Read the user's query. 
 2. If the query **includes a clear career goal** (e.g., “AI PM”, “백엔드 개발자”), use it as the target and summarize relevant experience.
 3. If the user’s query **does NOT include a specific career goal**, DO NOT assume or infer one. Instead, provide a general summary based on all available data.
 

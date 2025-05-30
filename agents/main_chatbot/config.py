@@ -1,2 +1,2 @@
-MODEL_NAME="gpt-40-mini"
+MODEL_NAME="gpt-4o-mini"
 TEMPERATURE=0

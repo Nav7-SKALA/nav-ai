@@ -5,7 +5,8 @@ import operator
 
 from langchain_core.messages import HumanMessage, BaseMessage, AIMessage
 
-from nav7_test.langgraph import options
+members = ["CareerSummary", "LearningPath", "RoleModel", "EXCEPTION"]
+options = ["FINISH"] + members
 
 class GraphState(TypedDict):
     input: str
@@ -18,7 +19,8 @@ class GraphState(TypedDict):
 class routeResponse(BaseModel):
     next: Literal[*options]
 
-
+# ✅ 수정된 State
 class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], operator.add]
-    next: str   # supervisor 결과 (다음 노드 지시)
+    messages: Annotated[List[BaseMessage], operator.add]  # Sequence → List로 변경
+    next: str
+    input_query: str

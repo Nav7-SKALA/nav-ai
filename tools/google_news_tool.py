@@ -27,12 +27,12 @@ def google_news_search(query: str) -> str:
     return "\n".join(news_items)
 
 
-if __name__ == "__main__":
-    # 동기 함수 테스트
-    print("\n--- '인공지능' 검색 결과 ---")
-    print(google_news_search("인공지능"))
+# if __name__ == "__main__":
+#     # 동기 함수 테스트
+#     print("\n--- '인공지능' 검색 결과 ---")
+#     print(google_news_search("인공지능"))
 
 
-    print("\n--- '생성형 AI' 검색 결과 ---")
-    print(google_news_search("생성형 AI"))
+#     print("\n--- '생성형 AI' 검색 결과 ---")
+#     print(google_news_search("생성형 AI"))
 

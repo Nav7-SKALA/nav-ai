@@ -14,14 +14,16 @@ from config import MODEL_NAME, TEMPERATURE
 # 환경변수 로드
 load_dotenv()
 
+
 # LLM 초기화
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
 
-llm = ChatOpenAI(model=MODEL_NAME, api_key=api_key, temperature=TEMPERATURE)
+os.environ["OPENAI_API_KEY"] = api_key
+llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
 
-roleModel_chain = roleModel_prompt | llm | StrOutputParser()
+roleModel_chain = PromptTemplate.from_template(roleModel_prompt) | llm | StrOutputParser()
 
 def roleModel_invoke(state: dict, config=None) -> dict:
     """roleModel Chain 실행 함수"""
