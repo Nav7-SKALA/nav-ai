@@ -1,4 +1,5 @@
 # config.py
+__pycache__
 .env
 pyproject.toml
 poetry.lock
