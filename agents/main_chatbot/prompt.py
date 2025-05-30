@@ -90,7 +90,7 @@ Constraints:
 
 """
 
-learningPath_prompt = learningPath_prompt = """
+learningPath_prompt = """
 You are a highly experienced consultant across multiple industries.
 
 Based on the user's career history and past experiences, your task is to:
