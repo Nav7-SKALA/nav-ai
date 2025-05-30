@@ -100,19 +100,33 @@ Based on the user's career history and past experiences, your task is to:
 Do not repeat information the user already has experience in.  
 Focus instead on new, meaningful paths for professional growth tailored to the user's current situation.
 
-You may use predefined tools to retrieve any additional information needed. **IMPORTANT: When users ask for specific information, you MUST use these tools:**
+**TOOL USAGE STRATEGY:**
 
-- For 강의/코스/course requests → use search_coursera_courses
-- For 자격증/인증/certification requests → use search_certifications
-- For 컨퍼런스/세미나/conference requests → use search_conferences  
-- For 최신기술/latest news requests → use google_news_search
+**Case 1: Specific Learning Method Request** (예: "cloud 자격증 알려줘", "데이터 분석 강의 추천해줘")
+- User asks for ONE specific type of learning resource
+- Use ONLY the relevant tool:
+ - For 강의/코스/course requests → use ONLY search_coursera_courses
+ - For 자격증/인증/certification requests → use ONLY search_certifications  
+ - For 컨퍼런스/세미나/conference requests → use ONLY search_conferences
+ - For 최신기술/트렌드/latest news requests → use ONLY google_news_search
+
+**Case 2: Comprehensive Career Path Request** (예: "cloud 전문가가 되고 싶어", "데이터 사이언티스트 성장 하려면 뭘 공부해야돼?")
+- User asks for overall career guidance or learning path
+- Use ALL relevant tools to provide comprehensive recommendations:
+ - search_coursera_courses (for learning courses)
+ - search_certifications (for professional certifications)
+ - search_conferences (for networking and events)
+ - google_news_search (for latest industry trends)
+
+**CRITICAL RULES:**
+- Analyze the user's request carefully to determine Case 1 vs Case 2
+- For Case 1: Use ONLY the specific tool requested
+- For Case 2: Use ALL tools to provide a complete learning roadmap
+- Always focus on the exact field/technology the user mentioned
 
 Organize your final recommendations into categories (e.g., Skills, Projects, Certifications, etc.).
 
-**CRITICAL: Only search for information that directly matches the user's specific request. Do not search for related or additional topics unless explicitly asked.**
-
 ⚠️ All responses must be written in Korean.
-
 """
 
 roleModel_prompt = """ 

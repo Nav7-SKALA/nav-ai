@@ -43,27 +43,28 @@ def learningPath_invoke(state: dict, config=None) -> dict:
     
     try:
         result = chain.invoke({"input": messages_text})
+        response_text = result.content
         
-        # Tool calls가 있으면 실행
-        if result.tool_calls:
-            tool_results = []
-            for tool_call in result.tool_calls:
-                tool_name = tool_call["name"]
-                tool_args = tool_call["args"]
+        # # # Tool calls가 있으면 실행
+        # # if result.tool_calls:
+        # #     tool_results = []
+        # #     for tool_call in result.tool_calls:
+        # #         tool_name = tool_call["name"]
+        # #         tool_args = tool_call["args"]
                 
-                # 해당 도구 찾아서 실행
-                for tool in tools:
-                    if tool.name == tool_name:
-                        tool_result = tool.invoke(tool_args)
-                        tool_results.append(f"{tool_name}: {tool_result}")
-                        break
+        # #         # 해당 도구 찾아서 실행
+        # #         for tool in tools:
+        # #             if tool.name == tool_name:
+        # #                 tool_result = tool.invoke(tool_args)
+        # #                 tool_results.append(f"{tool_name}: {tool_result}")
+        # #                 break
             
-            # 도구 결과를 포함해서 다시 LLM 호출
-            follow_up_prompt = f"{messages_text}\n\n도구 실행 결과:\n" + "\n".join(tool_results) + "\n\n위 정보를 바탕으로 한국어로 종합적인 학습 경로를 추천해주세요."
-            final_result = llm.invoke([("human", follow_up_prompt)])
-            response_text = final_result.content
-        else:
-            response_text = result.content
+        # #     # 도구 결과를 포함해서 다시 LLM 호출
+        # #     follow_up_prompt = f"{messages_text}\n\n도구 실행 결과:\n" + "\n".join(tool_results) + "\n\n위 검색 결과를 바탕으로 사용자의 요청에 적절하게 답변해주세요."
+        # #     final_result = llm.invoke([("human", follow_up_prompt)])
+        # #     response_text = final_result.content
+        # else:
+        #     response_text = result.content
             
     except Exception as e:
         response_text = f"학습 경로 추천 중 오류가 발생했습니다: {str(e)}"
@@ -82,6 +83,6 @@ def learningPath_node(state):
 
 if __name__ == "__main__":
     # 테스트
-    test_state = {"messages": [HumanMessage(content="cloud 관련된 자격증 찾아줘")]}
+    test_state = {"messages": [HumanMessage(content="데이터사이언스 관련된 자격증 찾아줘")]}
     result = learningPath_invoke(test_state)
     print(result["messages"][-1].content)
