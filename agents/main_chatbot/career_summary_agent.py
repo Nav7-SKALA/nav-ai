@@ -4,6 +4,10 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from config import MODEL_NAME, TEMPERATURE
+from prompt import careerSummary_prompt
+
+
 
 # 환경변수 로드
 load_dotenv()
@@ -13,34 +17,13 @@ api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY 환경변수를 설정해주세요.")
 
-llm = ChatOpenAI(model="gpt-4o-mini", api_key=api_key, temperature=0)
+llm = ChatOpenAI(model=MODEL_NAME, api_key=api_key, temperature=TEMPERATURE)
+
 
 # CareerSummary 프롬프트
 cs_prompt = PromptTemplate(
     input_variables=["messages", "information"],
-    template="""
-You are a helpful summarizer who is specialized in 
-gathering valuable info for given user career information and query.
-user's career information={information}
-----
-You have to made KOREAN career summary script.
-
-example:
-
-**ooo님은 5년차 백엔드 개발 전문가입니다.**
-
-- 🔹 총 프로젝트: 12건
-- 🔹 보유 자격증: AWS Solutions Architect, OCP, 정보처리기사 (총 3개)
-- 🔹 핵심 기술 스택: Python, Spring Boot, Docker, MySQL, AWS
-
-**주요 성과**
-
-1. A사 주문관리 시스템 리팩토링 → 응답 속도 30% 향상
-2. B사 인프라 자동화 도입 프로젝트 주도
-3. OCP 취득 후 쿠버네티스 기반 배포 파이프라인 구현
-
-Messages: {messages}
-"""
+    template=careerSummary_prompt
 )
 
 # CareerSummary 체인

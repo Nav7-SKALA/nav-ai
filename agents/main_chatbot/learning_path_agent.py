@@ -5,6 +5,10 @@ from langchain_core.messages import HumanMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
+from config import MODEL_NAME, TEMPERATURE
+
+from prompt import learningPath_prompt
+
 from tools import search_coursera_courses, search_conferences, search_certifications, google_news_search
 
 # 환경변수 로드
@@ -15,7 +19,8 @@ api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY 환경변수를 설정해주세요.")
 
-llm = ChatOpenAI(model="gpt-4o-mini", api_key=api_key, temperature=0)
+
+llm = ChatOpenAI(model=MODEL_NAME, api_key=api_key, temperature=TEMPERATURE)
 
 # Tools 리스트
 tools = [search_coursera_courses, search_conferences, search_certifications, google_news_search]
@@ -24,21 +29,7 @@ tools = [search_coursera_courses, search_conferences, search_certifications, goo
 llm_with_tools = llm.bind_tools(tools)
 
 # LearningPath 프롬프트
-prompt = PromptTemplate.from_template("""
-You are a highly experienced consultant across multiple industries.
-
-Based on the user's career history and past experiences, your task is to:
-- Recommend clear professional goals for the user.
-- Suggest actionable steps to achieve those goals, including relevant skills to learn, projects to undertake, and certifications to pursue.
-
-Do not repeat information the user already has experience in.  
-Focus instead on new, meaningful paths for professional growth tailored to the user’s current situation.
-
-You may use predefined tools to retrieve any additional information needed.  
-Organize your final recommendations into categories (e.g., Skills, Projects, Certifications, etc.).
-
-⚠️ All responses must be written in Korean.
-""")
+prompt = PromptTemplate.from_template(learningPath_prompt)
 
 # 간단한 체인
 chain = prompt | llm_with_tools
@@ -88,3 +79,9 @@ def learningPath_invoke(state: dict, config=None) -> dict:
 def learningPath_node(state):
     """LearningPath 노드 함수"""
     return learningPath_invoke(state)
+
+if __name__ == "__main__":
+    # 테스트
+    test_state = {"messages": [HumanMessage(content="cloud 관련된 자격증 찾아줘")]}
+    result = learningPath_invoke(test_state)
+    print(result["messages"][-1].content)
