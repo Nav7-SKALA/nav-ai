@@ -1,0 +1,2 @@
+MODEL_NAME="gpt-40-mini"
+TEMPERATURE=0
