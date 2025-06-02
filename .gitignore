@@ -1,5 +1,13 @@
-# config.py
-__pycache__
+config.py
+
 .env
-pyproject.toml
 poetry.lock
+
+# env
+.vscode/
+.env
+
+
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
