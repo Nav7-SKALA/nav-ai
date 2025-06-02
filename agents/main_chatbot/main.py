@@ -21,14 +21,3 @@ if __name__ == "__main__":
 
     for msg in result["messages"]:
         print(msg)
-        # if hasattr(msg, "name") and msg.name:
-        #     print(f"\n[{msg.name}]: {msg.content}")
-        # else:
-        #     print(f"\n[사용자]: {msg.content}")
-
-    # graph.invoke(initial_state)
-    # print(result["messages"][-1].content)
-
-    # Stream the graph execution
-    # for s in graph.stream(initial_state):
-    #     print(s)
