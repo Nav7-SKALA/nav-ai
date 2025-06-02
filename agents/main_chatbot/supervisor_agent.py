@@ -48,7 +48,8 @@ def supervisor_agent(state):
     result = supervisor_chain.invoke(state)
     # supervisor의 응답을 messages에 추가
     return {"next": result.next, 
-            "messages": [AIMessage(content=f"다음 에이전트: {result.next}")]
+            "agent_name": result.next, 
+            "messages": []
             }
 
 
