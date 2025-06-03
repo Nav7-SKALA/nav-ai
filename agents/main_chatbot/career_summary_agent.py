@@ -6,16 +6,13 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 from prompt import careerSummary_prompt
-from config import MODEL_NAME, TEMPERATURE
+from config import AGENT_ROOT, MODEL_NAME, TEMPERATURE
 
 import sys
-# 현재 파일의 상위 디렉토리 (nav-ai)를 sys.path에 추가
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.append(AGENT_ROOT)
 
-from tools.google_news_tool import google_news_search
-from tools.vector_search_tool import vectorDB_search
+# from tools.vector_search_tool import vectorDB_search
 from tools.postgres_tool import RDB_search
-from tools.web_search_tool import tavily_tool
 
 # 환경변수 로드
 load_dotenv()
@@ -28,7 +25,7 @@ if not api_key:
 os.environ["OPENAI_API_KEY"] = api_key
 llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
 
-tools = [RDB_search, vectorDB_search]
+tools = [RDB_search] # vectorDB_search
 
 # CareerSummary 프롬프트
 cs_prompt = PromptTemplate(

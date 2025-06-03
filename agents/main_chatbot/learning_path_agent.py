@@ -5,12 +5,11 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-from config import MODEL_NAME, TEMPERATURE
+from config import AGENT_ROOT, MODEL_NAME, TEMPERATURE
 from prompt import learningPath_prompt
 
 import sys
-# 현재 파일의 상위 디렉토리 (nav-ai)를 sys.path에 추가
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(AGENT_ROOT)
 
 from tools.web_search_tool import *
 from tools.google_news_tool import google_news_search
@@ -88,6 +87,6 @@ def learningPath_node(state):
 
 if __name__ == "__main__":
     # 테스트
-    test_state = {"messages": [HumanMessage(content="cloud 관련된 사내 강의 찾아줘")]}
+    test_state = {"messages": [HumanMessage(content="cloud 분야 PM이 되려면 어떻게 해야 할까?")]}
     result = learningPath_invoke(test_state)
     print(result["messages"][-1].content)
