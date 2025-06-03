@@ -1,3 +1,5 @@
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
 supervisor_prompt = """
 You are a supervisor managing a conversation between the following agents: {members}.
 A user will send a request related to their career.

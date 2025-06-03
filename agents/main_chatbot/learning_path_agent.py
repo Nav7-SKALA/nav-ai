@@ -5,6 +5,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
+
 from config import AGENT_ROOT, MODEL_NAME, TEMPERATURE
 from prompt import learningPath_prompt
 

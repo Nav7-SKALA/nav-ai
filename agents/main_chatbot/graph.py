@@ -103,7 +103,7 @@ def run_main_chatbot(user_query: str):
 
 if __name__ == "__main__":
 
-    user_query = "저녁뭐먹지"
+    user_query = "AI 개발자가 되고 싶은데 어떻게 공부해야 할까요?"
     
     result = run_main_chatbot(user_query)
     print(result)

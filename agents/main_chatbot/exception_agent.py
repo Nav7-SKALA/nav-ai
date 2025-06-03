@@ -39,6 +39,7 @@ def exception_invoke(state: dict, config=None) -> dict:
 
     result = exception_chain.invoke({
         "messages": last_message,
+        "information": ""
     })
 
     new_messages = [] #list(state.get("messages", []))

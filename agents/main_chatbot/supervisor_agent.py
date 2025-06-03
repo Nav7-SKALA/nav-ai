@@ -52,21 +52,6 @@ def supervisor_agent(state):
             "messages": []
             }
 
-# def supervisor_agent(state):
-#     result = supervisor_chain.invoke(state)
-
-#     # 기존 메시지 유지
-#     new_messages = list(state.get("messages", []))
-#     new_messages.append(
-#         AIMessage(content=f"다음 에이전트: {result.next}", name="Supervisor")
-#     )
-
-#     return {
-#         "next": result.next,
-#         "agent_name": result.next,
-#         "messages": new_messages
-#     }
-
 
 if __name__ == "__main__":
     # 테스트
