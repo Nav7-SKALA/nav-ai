@@ -1,0 +1,16 @@
+config.py
+
+data/
+chroma_db/
+
+.env
+poetry.lock
+
+# env
+.vscode/
+.env
+
+
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
