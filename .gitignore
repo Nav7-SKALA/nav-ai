@@ -1,5 +1,8 @@
 config.py
 
+data/
+chroma_db/
+
 .env
 poetry.lock
 
