@@ -1,44 +1,59 @@
 import os
 from langchain.tools import tool
 from langchain_community.vectorstores import Chroma
-# from sentence_transformers import SentenceTransformer
+import chromadb
+from sentence_transformers import SentenceTransformer
 import numpy as np
 import asyncio # asyncio 임포트
 
 from dotenv import load_dotenv
 load_dotenv()
 
-model_name = os.getenv("EMBEDDING_MODEL_NAME")
 vector_db_dir = os.getenv("VECTOR_DB_DIR")
 
-
-### test
-@tool
-def vectorDB_search(query: str) -> str:
-    """vectorDB에서 정보 검색 도구"""
-    return {"similar_id": ["1", "2", "3"]}
-
-### real
-# class KoreanEmbeddingModel:
-#     def __init__(self, model_name=model_name): # .env에서 모델 이름 가져오도록 변경
-#         """한국어 임베딩 모델 초기화
+class EmbeddingModel:
+    def __init__(self): # .env에서 모델 이름 가져오도록
+        """한국어 임베딩 모델 초기화
         
-#         Args:
-#             model_name (str): 사용할 임베딩 모델 이름
-#         """
-#         self.model_name = model_name
-#         self.model = SentenceTransformer(model_name)
+        Args:
+            model_name (str): 사용할 임베딩 모델 이름
+        """
+        self.model_name = os.getenv("EMBEDDING_MODEL_NAME")
+        self.model = SentenceTransformer(self.model_name)
     
-#     def embed_query(self, query):
-#         """쿼리 텍스트를 임베딩 벡터로 변환
-        
-#         Args:
-#             query (str): 임베딩할 쿼리 텍스트
-            
-#         Returns:
-#             numpy.ndarray: 임베딩 벡터
-#         """
-#         return self.model.encode(query)
+    def embed_query(self, query):
+        """쿼리 텍스트를 임베딩 벡터로 변환"""
+        return self.model.encode(query).tolist()
+
+
+@tool
+def lecture_search(query: str) -> str:
+    """vectorDB에서 정보 검색 도구"""
+    
+    chromDB_path = os.getenv("VECTOR_DB_DIR")
+    collection_name = os.getenv("LEC_COLLECTION_NAME")
+    
+    client = chromadb.PersistentClient(path=chromDB_path)
+    collection = client.get_or_create_collection(collection_name)
+    
+    embed = EmbeddingModel()
+    query_embedding = embed.embed_query(query) 
+
+    TOP_N = 5
+    results = collection.query(
+        query_embeddings=[query_embedding],  # 리스트 안에 1개의 벡터
+        n_results=TOP_N,                         # 상위 5개 반환
+        include=["documents", "metadatas", "distances"]
+    )
+
+    return {"search_lectures": results}
+
+
+if __name__ == "__main__":
+    # 테스트 쿼리
+    test_query = "생성형 AI 관련 강의"
+    print(lecture_search(test_query))
+
 
 
 # class VectorDBSearcher:

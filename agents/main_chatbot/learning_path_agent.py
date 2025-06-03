@@ -10,14 +10,11 @@ from prompt import learningPath_prompt
 
 import sys
 # 현재 파일의 상위 디렉토리 (nav-ai)를 sys.path에 추가
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from tools.web_search_tool import *
 from tools.google_news_tool import google_news_search
-
-
-# 현재 파일의 상위 디렉토리 (nav-ai)를 sys.path에 추가
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from tools.vector_search_tool import lecture_search
 
 # 환경변수 로드
 load_dotenv()
@@ -31,7 +28,7 @@ os.environ["OPENAI_API_KEY"] = api_key
 llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
 
 # Tools 리스트
-tools = [search_coursera_courses, search_conferences, search_certifications, google_news_search]
+tools = [lecture_search] #, search_coursera_courses, search_conferences, search_certifications]
 
 # LLM에 tool 바인딩
 llm_with_tools = llm.bind_tools(tools)
@@ -91,6 +88,6 @@ def learningPath_node(state):
 
 if __name__ == "__main__":
     # 테스트
-    test_state = {"messages": [HumanMessage(content="cloud 관련된 자격증 찾아줘")]}
+    test_state = {"messages": [HumanMessage(content="cloud 관련된 사내 강의 찾아줘")]}
     result = learningPath_invoke(test_state)
     print(result["messages"][-1].content)
