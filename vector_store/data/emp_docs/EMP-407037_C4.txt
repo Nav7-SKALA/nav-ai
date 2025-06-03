@@ -1,0 +1,31 @@
+**EMP-407037** 직원은 5년차부터 8년차까지의 경험으로, 공통 도메인에서 분석설계개발 역할을 담당했습니다. 주요 업무는 1에서 성공한 기반으로 대외 솔루션화 하여 프레임워크 기반 SI 수행 (솔이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Back-end Dev, Front-end Dev이며, 관련된 직무 영역은 Software Dev.직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 15년차부터 16년차까지의 경험으로, 통신, 제2금융 도메인에서 컨설팅, 공통PL 역할을 담당했습니다. 주요 업무는 MVIOS 아키텍처 진단, 사법기관 EA, 금융지원기관이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Application Architect이며, 관련된 직무 영역은 Architect 직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 13년차부터 15년차까지의 경험으로, 공통, 유통/물류/서비스 도메인에서 Application Arch./SA 역할을 담당했습니다. 주요 업무는 NEXCORE 및 확산( 에너지 B2C 최초적용)이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Application Architect이며, 관련된 직무 영역은 Architect 직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 13년차부터 15년차까지의 경험으로, 공통, 유통/물류/서비스, 통신, 제2금융 도메인에서 Application Arch./SA, 컨설팅, 공통PL 역할을 담당했습니다. 주요 업무는 NEXCORE 및 확산(에너지 B2C 최초적용), MVIOS 아키텍처 진단, 사법기관 EA, 금융지원기관이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Application Architect이며, 관련된 직무 영역은 Architect 직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 17년차부터 23년차까지의 경험으로, Global 도메인에서 솔루션관리, 구축/딜리버리 역할을 담당했습니다. 주요 업무는 xEMS Watz Eye 솔루션 개발 해외사업이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Application Architect이며, 관련된 직무 영역은 Architect 직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 10년차부터 12년차까지의 경험으로, 공통 도메인에서 신기술적용 역할을 담당했습니다. 주요 업무는 그룹포털 e-HR이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Back-end Dev이며, 관련된 직무 영역은 Software Dev.직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 10년차부터 12년차까지의 경험으로, 공통, 제2금융 도메인에서 신기술적용, Application Arch. 역할을 담당했습니다. 주요 업무는 그룹포털 e-HR, 금융지원기관 차세대이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Back-end Dev, Application Architect이며, 관련된 직무 영역은 Architect 직무, Software Dev.직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 1년차부터 6년차까지의 경험으로, (제조) 대내 Process 도메인에서 분석설계개발 역할을 담당했습니다. 주요 업무는 대기업그룹 New Payroll 외 확산이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Back-end Dev, Front-end Dev이며, 관련된 직무 영역은 Software Dev.직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 1년차부터 6년차까지의 경험으로, (제조) 대내 Process, 공통 도메인에서 분석설계개발 역할을 담당했습니다. 주요 업무는 대기업그룹 New Payroll 외 확산, 1에서 성공한 기반으로 대외 솔루션화 하여 프레임워크 기반 SI 수행 (솔이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Back-end Dev, Front-end Dev이며, 관련된 직무 영역은 Software Dev.직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 1년차부터 6년차까지의 경험으로, (제조) 대내 Process, 공통 도메인에서 분석설계개발 역할을 담당했습니다. 주요 업무는 대기업그룹 New Payroll 외 확산,대기업그룹 New Payroll 외 확산이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Back-end Dev, Front-end Dev이며, 관련된 직무 영역은 Software Dev.직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 28년차부터 29년차까지의 경험으로, 유통/물류/서비스, 통신 도메인에서 Cloud Eng., CICD, Technical Arch. 역할을 담당했습니다. 주요 업무는 렌터카회사 차세대, 제2금융권, 철강업체 AI,이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Application Architect이며, 관련된 직무 영역은 Architect 직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 24년차부터 27년차까지의 경험으로, (제조) 대내 Hi-Tech 도메인에서 Application Arch., PL 역할을 담당했습니다. 주요 업무는 반도체제조업 Workplace, 반도체제조업 AI Platform 등이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Application Architect이며, 관련된 직무 영역은 Architect 직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 24년차부터 27년차까지의 경험으로, (제조) 대내 Hi-Tech, 제2금융 도메인에서 Application Arch., PL, Cloud Architect 역할을 담당했습니다. 주요 업무는 반도체제조업 Workplace, 반도체제조업 AI Platform 등, 제2금융권 클라우드이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Application Architect이며, 관련된 직무 영역은 Architect 직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 30년차부터 31년차까지의 경험으로, 유통/물류/서비스 도메인에서 Technical Arch. 역할을 담당했습니다. 주요 업무는 보안회사 차세대이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Application Architect이며, 관련된 직무 영역은 Architect 직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 27년차부터 28년차까지의 경험으로, 제2금융, 유통/물류/서비스 도메인에서 Cloud Architect, PL ,Cloud Eng. 역할을 담당했습니다. 주요 업무는 제2금융권 클라우드, 렌터카회사 차세대이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Application Architect이며, 관련된 직무 영역은 Architect 직무입니다. [Grade: C4]
+
+**EMP-407037** 직원은 29년차부터 30년차까지의 경험으로, 통신, 유통/물류/서비스 도메인에서 Technical Arch. 역할을 담당했습니다. 주요 업무는 철강업체 AI, 보안회사 차세대이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 Application Architect이며, 관련된 직무 영역은 Architect 직무입니다. [Grade: C4]
