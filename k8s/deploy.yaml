@@ -18,11 +18,21 @@ spec:
       serviceAccountName: default
       containers:
         - name: nav7-ai
-          image: amdp-registry.skala-ai.com/skala25a/sk-nav7-ai:1.0.0-32-ddae87c4e60b
+          image: amdp-registry.skala-ai.com/skala25a/sk-nav7-ai:1.0.0-45-dee09521f015
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
           env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secret
+                  key: OPENAI_API_KEY
+            - name: TAVILY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tavily-secret
+                  key: TAVILY_API_KEY
             - name: IMAGE_REGISTRY
               value: "amdp-registry.skala-ai.com/skala25a"
             - name: IMAGE_NAME
@@ -31,3 +41,4 @@ spec:
               value: "1.0.0"
             - name: PORT
               value: "8000"
+
