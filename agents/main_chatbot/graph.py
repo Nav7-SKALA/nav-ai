@@ -73,8 +73,9 @@ def create_initial_state(user_query: str) -> AgentState:
     return {
         "messages": [HumanMessage(content=user_query)],
         "next": "",
-        #"input_query": user_query
+        "input_query": user_query
     }
+
 
 def run_workflow(user_query: str):
     """워크플로우 실행"""
@@ -84,18 +85,45 @@ def run_workflow(user_query: str):
     # 초기 상태 생성
     initial_state = create_initial_state(user_query)
     
-    result = graph.invoke(
-    initial_state, 
-    config={"recursion_limit": 10}  # 여기서 설정
-    )
+    # result = graph.invoke(initial_state)
+    # print(result)
     
-    # 마지막 결과만 저장
-    result_dict = {}
-    for msg in result["messages"][1:]:
-        result_dict['agent'] = msg.name
-        result_dict['content'] = msg.content
+    result_content = {'content': {}}
+    try:
+        result = graph.invoke(initial_state)
 
-    return result_dict
+        content_dict = {"success": True, "result": {}}
+        contents = {}
+        for message in result['messages'][1:]:
+            contents['agent'] = message.name
+            if message.name == 'RoleModel':
+                import json
+                
+                rolemodels = json.loads(message.content)
+                contents['text'] = rolemodels
+            else:
+                contents['text'] = message.content
+        
+        content_dict['result'] = contents
+        result_content['content'] = content_dict
+        
+    # except OpenAIError as e:
+    #     result_content['content'] = {
+    #         'success': False,
+    #         'result': {"OpenAI API error"}
+    #     }
+    # except RateLimitError as e:
+    #     result_content['content'] = {
+    #         'success': False,
+    #         'result': {"OpenAI rate limit error"}
+    #     }
+    except Exception as e:
+        result_content['content'] = {
+            'success': False,
+            'result': {f"에러 발생: {e.__class__.__name__}: {e}"}
+        }
+
+    return result_content
 
 def run_main_chatbot(user_query: str):
     """메인 챗봇 실행"""
@@ -106,14 +134,8 @@ def run_main_chatbot(user_query: str):
 
 if __name__ == "__main__":
 
-    user_query = "내 경력 요약해줘"
+    user_query = "롤모델 추천해줘"
     
     result = run_main_chatbot(user_query)
     print(result)
 
-# if __name__ == "__main__":
-#     print("=== Supervisor 테스트 ===")
-#     from supervisor_agent import supervisor_chain
-#     test_state = {"messages": [HumanMessage(content="배고프다")]}
-#     supervisor_result = supervisor_chain.invoke(test_state)
-#     print(f"Supervisor 결정: {supervisor_result.next}")

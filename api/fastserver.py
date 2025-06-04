@@ -1,5 +1,14 @@
+import sys
 from fastapi import FastAPI
 import uvicorn
+from pydantic import BaseModel
+
+from config import BASE_DIR, AGENT_ROOT, AGENT_DIR
+
+sys.path.append(BASE_DIR)
+sys.path.append(AGENT_ROOT)
+sys.path.append(AGENT_DIR['main_chatbot'])
+from main_chatbot.graph import run_main_chatbot
 
 app = FastAPI(docs_url="/apis/docs", openapi_url="/apis/openapi.json")
 
@@ -7,18 +16,18 @@ app = FastAPI(docs_url="/apis/docs", openapi_url="/apis/openapi.json")
 # def career_path():
 #     return "커리어추천: cloud 강의 듣기"
 
-from pydantic import BaseModel
 # Request 정의
-class career_path_response(BaseModel):
+class career_path_request(BaseModel):
     user_query: str
     user_id: str
 
 @app.post("/apis/v1/career-path")
-def career_path(request: career_path_response):
+def career_path(request: career_path_request):
     """메인 챗봇 API"""
-
-    return {"agent": "CAREER_SUMMARY",
-            "maps": {"summary": "test string"}}
+    
+    result = run_main_chatbot(request.user_query)
+    
+    return result
 
 
 @app.post("/apis/v1/rolemodel")
@@ -33,7 +42,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=8000)
+    parser.add_argument('--port', type=int, default=8001)
     args = parser.parse_args()
     
     uvicorn.run(app, host="0.0.0.0", port=args.port)
