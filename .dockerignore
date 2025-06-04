@@ -1,0 +1,18 @@
+# Kubernetes 관련
+k8s/
+
+# Git 관련
+.git
+.gitignore
+
+
+# 환경 설정
+.env
+.vscode/
+
+# OS 파일
+.DS_Store
+
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
