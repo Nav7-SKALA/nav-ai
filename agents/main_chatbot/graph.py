@@ -77,6 +77,18 @@ def create_initial_state(user_query: str) -> AgentState:
         "input_query": user_query
     }
 
+def create_response(result):
+    result_content = {'content': {}}
+    content_dict = {"success": True, "result": {}}
+    contents = {}
+    for message in result['messages'][1:]:
+        contents['agent'] = message.name
+        contents['text'] = message.content
+    content_dict['result'] = contents
+    result_content['content'] = content_dict
+    
+    return result_content
+
 def run_workflow(user_query: str):
     """워크플로우 실행"""
     
@@ -91,31 +103,14 @@ def run_workflow(user_query: str):
     result_content = {'content': {}}
     try:
         result = graph.invoke(initial_state)
+        result_content = create_response(result)
 
-        content_dict = {"success": True, "result": {}}
-        contents = {}
-        for message in result['messages'][1:]:
-            contents['agent'] = message.name
-            contents['text'] = message.content
-        
-        content_dict['result'] = contents
-        result_content['content'] = content_dict
-        
-    # except OpenAIError as e:
-    #     result_content['content'] = {
-    #         'success': False,
-    #         'result': {"OpenAI API error"}
-    #     }
-    # except RateLimitError as e:
-    #     result_content['content'] = {
-    #         'success': False,
-    #         'result': {"OpenAI rate limit error"}
-    #     }
     except Exception as e:
         result_content['content'] = {
             'success': False,
             'result': {f"에러 발생: {e.__class__.__name__}: {e}"}
         }
+        
 
     return result_content
 
