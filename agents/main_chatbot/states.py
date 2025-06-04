@@ -8,12 +8,12 @@ from langchain_core.messages import HumanMessage, BaseMessage, AIMessage
 members = ["CareerSummary", "LearningPath", "RoleModel", "EXCEPTION"]
 options = ["FINISH"] + members
 
-class GraphState(TypedDict):
-    input: str
-    responses: Dict[str, str]
-    history: List[str]
-    current_agent: Optional[str]
-    next_agent: Optional[str]
+# class GraphState(TypedDict):
+#     input: str
+#     responses: Dict[str, str]
+#     history: List[str]
+#     current_agent: Optional[str]
+#     next_agent: Optional[str]
 
 
 class routeResponse(BaseModel):

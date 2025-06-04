@@ -43,7 +43,7 @@ def exception_invoke(state: dict, config=None) -> dict:
     })
 
     new_messages = [] #list(state.get("messages", []))
-    new_messages.append(AIMessage(content=result))
+    new_messages.append(AIMessage(content=result, name="EXCEPTION"))
 
     return {
         **state,

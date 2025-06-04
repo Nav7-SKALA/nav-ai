@@ -50,7 +50,7 @@ def create_workflow():
     workflow.add_edge(START, "supervisor")
         
     for member in members:
-        workflow.add_edge(member, "supervisor")
+        workflow.add_edge(member, END)
         
     conditional_map = {}
     for member in members:
@@ -84,7 +84,10 @@ def run_workflow(user_query: str):
     # 초기 상태 생성
     initial_state = create_initial_state(user_query)
     
-    result = graph.invoke(initial_state)
+    result = graph.invoke(
+    initial_state, 
+    config={"recursion_limit": 10}  # 여기서 설정
+    )
     
     # 마지막 결과만 저장
     result_dict = {}
@@ -103,7 +106,14 @@ def run_main_chatbot(user_query: str):
 
 if __name__ == "__main__":
 
-    user_query = "AI 개발자가 되고 싶은데 어떻게 공부해야 할까요?"
+    user_query = "내 경력 요약해줘"
     
     result = run_main_chatbot(user_query)
     print(result)
+
+# if __name__ == "__main__":
+#     print("=== Supervisor 테스트 ===")
+#     from supervisor_agent import supervisor_chain
+#     test_state = {"messages": [HumanMessage(content="배고프다")]}
+#     supervisor_result = supervisor_chain.invoke(test_state)
+#     print(f"Supervisor 결정: {supervisor_result.next}")

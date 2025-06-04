@@ -1,6 +1,5 @@
 config.py
 
-data/
 chroma_db/
 
 .env
@@ -14,3 +13,5 @@ poetry.lock
 # Python bytecode / cache
 __pycache__/
 *.py[cod]
+
+.DS_Store
