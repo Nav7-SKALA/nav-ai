@@ -27,12 +27,12 @@ spec:
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: openai-secret
+                  name: nav-ai-secret
                   key: OPENAI_API_KEY
             - name: TAVILY_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: tavily-secret
+                  name: nav-ai-secret
                   key: TAVILY_API_KEY
             - name: IMAGE_REGISTRY
               value: "amdp-registry.skala-ai.com/skala25a"
