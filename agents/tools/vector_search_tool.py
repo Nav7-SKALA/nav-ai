@@ -11,6 +11,11 @@ load_dotenv()
 
 vector_db_dir = os.getenv("VECTOR_DB_DIR")
 
+@tool
+def connect_chromaDB():
+    """cloud chromaDB 연결"""
+    
+
 class EmbeddingModel:
     def __init__(self): # .env에서 모델 이름 가져오도록
         """한국어 임베딩 모델 초기화
@@ -47,6 +52,7 @@ def lecture_search(query: str) -> str:
     )
 
     return {"search_lectures": results}
+
 
 
 if __name__ == "__main__":

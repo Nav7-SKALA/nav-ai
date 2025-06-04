@@ -85,20 +85,39 @@ def run_workflow(user_query: str):
     # 초기 상태 생성
     initial_state = create_initial_state(user_query)
     
-    result = graph.invoke(initial_state)
-    print(result)
+    # result = graph.invoke(initial_state)
+    # print(result)
     
-    result_dict = {}
-    for msg in result["messages"][1:]:
-        result_dict['agent'] = msg.name
-        result_dict['map'] = {'text': msg.content}
-        # TODO: msg_content - dict 형태로 변환해야 함
-        # if result_dict[msg.name] != 'LearningPath':
-        #     result_dict['map'] = {'text': msg.content}
-        # else:
-        #     result_dict['map'] = msg.content 
+    result_content = {'content': {}}
+    try:
+        result = graph.invoke(initial_state)
 
-    return result_dict
+        content_dict = {"success": True, "result": {}}
+        contents = {}
+        for message in result['messages'][1:]:
+            contents['agent'] = message.name
+            contents['text'] = message.content
+        
+        content_dict['result'] = contents
+        result_content['content'] = content_dict
+        
+    # except OpenAIError as e:
+    #     result_content['content'] = {
+    #         'success': False,
+    #         'result': {"OpenAI API error"}
+    #     }
+    # except RateLimitError as e:
+    #     result_content['content'] = {
+    #         'success': False,
+    #         'result': {"OpenAI rate limit error"}
+    #     }
+    except Exception as e:
+        result_content['content'] = {
+            'success': False,
+            'result': {f"에러 발생: {e.__class__.__name__}: {e}"}
+        }
+
+    return result_content
 
 def run_main_chatbot(user_query: str):
     """메인 챗봇 실행"""
@@ -110,17 +129,8 @@ def run_main_chatbot(user_query: str):
 
 if __name__ == "__main__":
 
-    user_query = "내 경력 요약해줘" #"AI 개발자가 되고 싶은데 어떻게 공부해야 할까요?"
+    user_query = "AI 개발자가 되고 싶은데 어떻게 공부해야 할까요?"
     
     result = run_main_chatbot(user_query)
-    # print(result['messages'][1:])
-    # final_result = transform_response(result)
+
     print(result)
-    # graph = create_workflow()
-    # # 초기 상태 생성
-    # initial_state = create_initial_state(user_query)
-    
-    # for s in graph.stream(initial_state):
-    #     print(s)
-        # if s.get("messages"):
-        #     print(s["messages"][-1].content)
