@@ -34,7 +34,6 @@ def career_path(request: career_path_request):
     #result = run_main_chatbot(request.user_query)
     graph = create_workflow()
     initial_state = create_initial_state(request.user_query)
-
     try:
         result = graph.invoke(initial_state)
         result_content = create_response(result)
