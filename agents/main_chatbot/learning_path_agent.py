@@ -27,7 +27,7 @@ os.environ["OPENAI_API_KEY"] = api_key
 llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
 
 # Tools 리스트
-tools = [lecture_search] #, search_coursera_courses, search_conferences, search_certifications]
+tools = [lecture_search, search_coursera_courses, search_conferences, search_certifications]
 
 # LLM에 tool 바인딩
 llm_with_tools = llm.bind_tools(tools)
@@ -87,6 +87,6 @@ def learningPath_node(state):
 
 if __name__ == "__main__":
     # 테스트
-    test_state = {"messages": [HumanMessage(content="cloud 분야 PM이 되려면 어떻게 해야 할까?")]}
+    test_state = {"messages": [HumanMessage(content="cloud 관련 강의 찾아줘")]}
     result = learningPath_invoke(test_state)
     print(result["messages"][-1].content)

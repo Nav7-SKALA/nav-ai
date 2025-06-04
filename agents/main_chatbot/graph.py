@@ -1,6 +1,7 @@
 from typing import TypedDict, Annotated, List
 from langchain_core.messages import BaseMessage, HumanMessage
 from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
 import operator
 
 # 필요한 모듈들 임포트
@@ -17,9 +18,9 @@ options = ["FINISH"] + members
 
 
 class AgentState(TypedDict):
-    messages: Annotated[List[BaseMessage], operator.add] = [] # Sequence → List
+    input_query : str
+    messages: Annotated[List[BaseMessage], add_messages] = [] # Sequence → List
     next: str
-    #input_query: str
 
 
 def supervisor_router(state: AgentState) -> str:
@@ -50,7 +51,7 @@ def create_workflow():
     workflow.add_edge(START, "supervisor")
         
     for member in members:
-        workflow.add_edge(member, "supervisor")
+        workflow.add_edge(member, END) #"supervisor"
         
     conditional_map = {}
     for member in members:
@@ -73,7 +74,7 @@ def create_initial_state(user_query: str) -> AgentState:
     return {
         "messages": [HumanMessage(content=user_query)],
         "next": "",
-        #"input_query": user_query
+        "input_query": user_query
     }
 
 def run_workflow(user_query: str):
@@ -85,12 +86,17 @@ def run_workflow(user_query: str):
     initial_state = create_initial_state(user_query)
     
     result = graph.invoke(initial_state)
+    print(result)
     
-    # 마지막 결과만 저장
     result_dict = {}
     for msg in result["messages"][1:]:
         result_dict['agent'] = msg.name
-        result_dict['content'] = msg.content
+        result_dict['map'] = {'text': msg.content}
+        # TODO: msg_content - dict 형태로 변환해야 함
+        # if result_dict[msg.name] != 'LearningPath':
+        #     result_dict['map'] = {'text': msg.content}
+        # else:
+        #     result_dict['map'] = msg.content 
 
     return result_dict
 
@@ -99,11 +105,22 @@ def run_main_chatbot(user_query: str):
 
     graph = create_workflow()
     result = run_workflow(user_query)
+
     return result
 
 if __name__ == "__main__":
 
-    user_query = "AI 개발자가 되고 싶은데 어떻게 공부해야 할까요?"
+    user_query = "내 경력 요약해줘" #"AI 개발자가 되고 싶은데 어떻게 공부해야 할까요?"
     
     result = run_main_chatbot(user_query)
+    # print(result['messages'][1:])
+    # final_result = transform_response(result)
     print(result)
+    # graph = create_workflow()
+    # # 초기 상태 생성
+    # initial_state = create_initial_state(user_query)
+    
+    # for s in graph.stream(initial_state):
+    #     print(s)
+        # if s.get("messages"):
+        #     print(s["messages"][-1].content)

@@ -31,8 +31,8 @@ sv_prompt = ChatPromptTemplate.from_messages(
     [("system", supervisor_prompt),
      MessagesPlaceholder(variable_name="messages"),
      ("system", "Given the conversation above, who should act next?"
-                "Or should we FINISH?"
-                "Select one of {options}")]
+                #"Or should we FINISH?"
+                "Select one of {members}")]
 ).partial(
     options=str(options),
     members=", ".join(members)
@@ -46,15 +46,21 @@ supervisor_chain = sv_prompt | llm.with_structured_output(routeResponse)
 def supervisor_agent(state):
     """supervisor agent"""
     result = supervisor_chain.invoke(state)
+
+    # 기존 메세지 유지
+    new_messages = list(state.get("messages", []))
+    # new_messages.append(AIMessage(content=f"다음 에이전트:{result.next}", name="Supervisor"))
     # supervisor의 응답을 messages에 추가
     return {"next": result.next, 
             "agent_name": result.next, 
-            "messages": []
+            "messages": new_messages
             }
 
 
 if __name__ == "__main__":
     # 테스트
     test_state = {"messages": [HumanMessage(content="AI PM 되려면 어케 해야 함?")]}
-    result = supervisor_chain.invoke(test_state)
-    print(result.next)
+    # result = supervisor_chain.invoke(test_state)
+    # print(result)
+    result = supervisor_agent(test_state)
+    print(result)

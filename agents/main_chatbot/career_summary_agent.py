@@ -63,6 +63,6 @@ def careerSummary_node(state):
 
 if __name__ == "__main__":
     # 테스트
-    test_state = {"messages": [HumanMessage(content="AI PM 되려면 어떻게 해야 해?")]}
+    test_state = {"messages": [HumanMessage(content="내 경력 좀 요약해줘")]}
     result = careerSummary_invoke(test_state)
     print(result["messages"][-1].content)
