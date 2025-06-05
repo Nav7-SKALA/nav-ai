@@ -1,5 +1,6 @@
 
 chroma_db/
+data/
 
 .env
 poetry.lock
@@ -14,5 +15,3 @@ __pycache__/
 *.py[cod]
 
 .DS_Store
-
-vectore_store/
