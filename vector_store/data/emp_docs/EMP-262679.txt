@@ -1,0 +1,31 @@
+**EMP-262679** 직원은 21년차부터 23년차까지의 경험으로, 금융 도메인에서 PL 역할을 담당했습니다. 주요 업무는 IT장비회사 서버, 스토리지, 네트워크 장비 파트너 사업이며, 프로젝트 규모는 -입니다. 활용한 기술 스택은 Sales, Domain Expert이며, 관련된 직무 영역은 사업관리/개발/제안, PL, 영업입니다. 
+
+**EMP-262679** 직원은 19년차부터 19년차까지의 경험으로, 금융 도메인에서 PM 역할을 담당했습니다. 주요 업무는 그룹사 시스템 운영관리 솔루션(SOL) 개발/유통 사업, 제1금융권 정보시스템 운영 사업이며, 프로젝트 규모는 (대형) 100억 이상 ~ 500억 미만입니다. 활용한 기술 스택은 System/Network Eng, Quality Eng, Domain Expert, Infra PM -- 대형PM이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, Project Mgmt. 직무 -- 대형PM, 사업관리/개발/제안, PL, Quality Mgmt. 직무입니다. 
+
+**EMP-262679** 직원은 27년차부터 27년차까지의 경험으로, 금융 도메인에서 PL 역할을 담당했습니다. 주요 업무는 금융그룹 공용 클라우드 구축 - 2단계이며, 프로젝트 규모는 (대형) 100억 이상 ~ 500억 미만입니다. 활용한 기술 스택은 System/Network Eng, Domain Expert이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, 사업관리/개발/제안, PL입니다. 
+
+**EMP-262679** 직원은 17년차부터 17년차까지의 경험으로, 금융 도메인에서 PM 역할을 담당했습니다. 주요 업무는 금융지주 IT통합운영관리체계 구축이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 System/Network Eng, Quality Eng, Infra PM이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, Project Mgmt. 직무, Quality Mgmt. 직무입니다. 
+
+**EMP-262679** 직원은 6년차부터 11년차까지의 경험으로, 제조 도메인에서 SE (System Engineer) 역할을 담당했습니다. 주요 업무는 에너지/화학 계열사 Windows NT, MS-SQL 서버 구축/운영이며, 프로젝트 규모는 -입니다. 활용한 기술 스택은 System/Network Eng이며, 관련된 직무 영역은 Cloud/Infra Eng.직무입니다. 
+
+**EMP-262679** 직원은 6년차부터 11년차까지의 경험으로, 제조 도메인에서 SE (System Engineer), PL 역할을 담당했습니다. 주요 업무는 에너지/화학 계열사 Windows NT, MS-SQL 서버 구축/운영, 통신사 통합운영관리체계 정립/통합운영관리 시스템 구축이며, 프로젝트 규모는 -입니다. 활용한 기술 스택은 System/Network Eng, Domain Expert이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, 사업관리/개발/제안, PL입니다. 
+
+**EMP-262679** 직원은 11년차부터 12년차까지의 경험으로, 공공 도메인에서 PL 역할을 담당했습니다. 주요 업무는 정부기관 2단계 구축, 통신사 통합운영관리 시스템 고도화이며, 프로젝트 규모는 (대형) 100억 이상 ~ 500억 미만입니다. 활용한 기술 스택은 System/Network Eng, Quality Eng, Domain Expert, PMO이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, 사업관리/개발/제안, PL, Quality Mgmt. 직무입니다. 
+
+**EMP-262679** 직원은 13년차부터 14년차까지의 경험으로, 공공 도메인에서 PL 역할을 담당했습니다. 주요 업무는 정부기관 통합운영환경 위탁운영이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 System/Network Eng, Quality Eng이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, Quality Mgmt. 직무입니다. 
+
+**EMP-262679** 직원은 15년차부터 16년차까지의 경험으로, 금융 도메인에서 PL, PM 역할을 담당했습니다. 주요 업무는 제1금융권 ITSM 4차 구축 사업이며, 프로젝트 규모는 (중소형) 20억 이상~50억 미만입니다. 활용한 기술 스택은 System/Network Eng, Quality Eng, Infra PM이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, Project Mgmt. 직무, Quality Mgmt. 직무입니다. 
+
+**EMP-262679** 직원은 15년차부터 16년차까지의 경험으로, 금융 도메인에서 PL, PM 역할을 담당했습니다. 주요 업무는 제1금융권 ITSM 4차 구축 사업, 정부기관 통합자원 인프라 구축이며, 프로젝트 규모는 (중소형) 20억 이상~50억 미만입니다. 활용한 기술 스택은 System/Network Eng, Quality Eng, Infra PM이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, Project Mgmt. 직무, Quality Mgmt. 직무입니다. 
+
+**EMP-262679** 직원은 20년차부터 21년차까지의 경험으로, 금융 도메인에서 PM 역할을 담당했습니다. 주요 업무는 제1금융권 IT업무지원시스템 구축이며, 프로젝트 규모는 (중소형) 20억 이상~50억 미만입니다. 활용한 기술 스택은 System/Network Eng, Quality Eng, Infra PM이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, Project Mgmt. 직무, Quality Mgmt. 직무입니다. 
+
+**EMP-262679** 직원은 28년차부터 31년차까지의 경험으로, 금융 도메인에서 PM 역할을 담당했습니다. 주요 업무는 제1금융권 IT통합유지보수이며, 프로젝트 규모는 (대형) 100억 이상 ~ 500억 미만입니다. 활용한 기술 스택은 Infra PM -- 대형PM이며, 관련된 직무 영역은 Project Mgmt. 직무 -- 대형PM입니다. 
+
+**EMP-262679** 직원은 24년차부터 26년차까지의 경험으로, 금융 도메인에서 PL 역할을 담당했습니다. 주요 업무는 제1금융권 차세대이며, 프로젝트 규모는 (초대형) 500억입니다. 활용한 기술 스택은 System/Network Eng, Quality Eng, Domain Expert이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, 사업관리/개발/제안, PL, Quality Mgmt. 직무입니다. 
+
+**EMP-262679** 직원은 19년차부터 20년차까지의 경험으로, 금융 도메인에서 PM 역할을 담당했습니다. 주요 업무는 제2금융권 IT인프라 통합유지보수이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 System/Network Eng, Quality Eng, Infra PM이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, Project Mgmt. 직무, Quality Mgmt. 직무입니다. 
+
+**EMP-262679** 직원은 18년차부터 18년차까지의 경험으로, 제조 도메인에서 PL 역할을 담당했습니다. 주요 업무는 조선회사 IT업인프라 구조 진단이며, 프로젝트 규모는 nan입니다. 활용한 기술 스택은 System/Network Eng, Quality Eng, Domain Expert이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, 사업관리/개발/제안, PL, Quality Mgmt. 직무입니다. 
+
+**EMP-262679** 직원은 1년차부터 6년차까지의 경험으로, 제조 도메인에서 SE (System Engineer) 역할을 담당했습니다. 주요 업무는 화학 시스템 운영이며, 프로젝트 규모는 -입니다. 활용한 기술 스택은 System/Network Eng이며, 관련된 직무 영역은 Cloud/Infra Eng.직무입니다. 

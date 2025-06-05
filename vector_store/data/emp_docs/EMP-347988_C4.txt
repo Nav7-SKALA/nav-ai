@@ -1,5 +1,0 @@
-**EMP-347988** 직원은 1년차부터 19년차까지의 경험으로, 통신 도메인에서 PM 3년, PL 14년 역할을 담당했습니다. 주요 업무는 통신業 SDN IP장비 구축 및 PMO, 통신業 ITSM 구축 및 운영이며, 프로젝트 규모는 (소형) 20억 미만, (중형) 50억 이상 ~ 100억 미만입니다. 활용한 기술 스택은 Domain Expert, Infra PM, System/Network Eng, Cyber Security이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, Project Mgmt. 직무, 사업관리/개발/제안, PL입니다. [Grade: C4]
-
-**EMP-347988** 직원은 1년차부터 19년차까지의 경험으로, 통신 도메인에서 PM 3년, PL 14년 역할을 담당했습니다. 주요 업무는 통신業 SDN IP장비 구축 및 PMO, 통신業 SDN IP장비 유지보수, 통신業 ITSM 구축 및 운영, 통신業 NW보안장비 구축이며, 프로젝트 규모는 (소형) 20억 미만, (중형) 50억 이상 ~ 100억 미만입니다. 활용한 기술 스택은 Domain Expert, System/Network Eng이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, 사업관리/개발/제안, PL입니다. [Grade: C4]
-
-**EMP-347988** 직원은 1년차부터 23년차까지의 경험으로, 통신 도메인에서 PM 4년, PL 18년 역할을 담당했습니다. 주요 업무는 통신業 SDN IP장비 유지보수, 통신業 ITSM 구축 및 운영이며, 프로젝트 규모는 (소형) 20억 미만, (중형) 50억 이상 ~ 100억 미만입니다. 활용한 기술 스택은 Domain Expert, Infra PM, System/Network Eng, Cyber Security이며, 관련된 직무 영역은 Cloud/Infra Eng.직무, Project Mgmt. 직무, 사업관리/개발/제안, PL입니다. [Grade: C4]

@@ -1,10 +1,12 @@
 import pandas as pd
 import os
+from config import HISTORY_PATH, SKILLSET_PATH, DOCS_DIR
+import pandas as pd
 
 def create_employee_documents():
     # CSV 파일 읽기
-    employee_df = pd.read_csv('직원history.csv')
-    skillset_df = pd.read_csv('skillset_data.csv')
+    employee_df = pd.read_csv(HISTORY_PATH)
+    skillset_df = pd.read_csv(SKILLSET_PATH)
     
     # 스킬셋 매핑 딕셔너리 생성
     skill_mapping = {}
@@ -24,7 +26,7 @@ def create_employee_documents():
         job_mapping[code] = job_category
     
     # 출력 디렉토리 생성
-    output_dir = 'emp_docs'
+    output_dir = DOCS_DIR
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
@@ -87,14 +89,13 @@ def create_employee_documents():
                 f"활용한 기술 스택은 {skill_names_str}이며, "
                 f"관련된 직무 영역은 {job_categories_str}입니다. "
                 f"{career_impact + ' ' if career_impact else ''}"
-                f"[Grade: C4]"
             )
             
             project_texts.append(content_text)
         
         # 한 사원의 모든 프로젝트를 하나의 파일로 저장
         full_document = "\n\n".join(project_texts)
-        filename = f"{output_dir}/{employee_id}_C4.txt"
+        filename = f"{output_dir}/{employee_id}.txt"
         
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(full_document)
