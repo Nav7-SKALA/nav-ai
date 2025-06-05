@@ -1,4 +1,3 @@
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 supervisor_prompt ="""
 You are a supervisor managing a conversation between the following agents: {members}.
@@ -117,47 +116,35 @@ Organize your final recommendations into categories (e.g., Skills, Projects, Cer
 ⚠️ All responses must be written in Korean.
 """
 
-# roleModel_prompt = """ 
-# You are a senior HR expert with over 20 years of in-house experience.
+roleModel_prompt ="""You are a role model recommendation expert. Please analyze the user's request and select the 3 most suitable candidates from 9 candidates.
 
-# Your task is to identify potential internal role model candidates for the user,  
-# based on their career history and stated career goals.
+User Request: {messages_text}
 
-# You should compare the user's profile against pre-embedded representations of other employees' career paths,  
-# and calculate cosine similarity to identify the top 3 most relevant matches.
+Candidate Information (including similarity scores):
+{employee_info}
 
-# Return information on the top 3 candidates who show the highest similarity to the user’s profile.
-# ⚠️ All responses must be written in Korean.
-# """
-roleModel_prompt=roleModel_prompt = """
-You are a role model recommendation agent. Analyze the user's request and provide role model recommendations when they ask for role models in any field or profession.
+Please select the 3 most suitable candidates from the above 9 candidates for the user's request, and respond only in the following format using each actual similarity score:
 
-WHEN TO ACTIVATE:
-- User asks for role models (롤모델, 롤 모델)
-- Examples: "PM 롤모델 추천해줘", "백엔드 개발자 롤모델 찾아줘", "디자이너 롤모델 알려줘"
-
-Please analyze the user information and recommend the 3 most suitable role models. Generate reasons for the 3 people and their respective profileId and similarity_score. You must respond only in the following format:
-
+Response Format:
 [
-    {{
-        "profileId": ,
-        "similarity_score": 
-    }},
-    {{
-        "profileId": ,
-        "similarity_score": 
-    }},
-    {{
-        "profileId": ,
-        "similarity_score": 
-    }}
+   {
+       "profileId": "selected_profileId_1",
+       "similarity_score": "actual_similarity_score_for_the_corresponding_profileId_above"
+   },
+   {
+       "profileId": "selected_profileId_2", 
+       "similarity_score": "actual_similarity_score_for_the_corresponding_profileId_above"
+   },
+   {
+       "profileId": "selected_profileId_3",
+       "similarity_score": "actual_similarity_score_for_the_corresponding_profileId_above"
+   }
 ]
 
-Set profileId as 1, 2, 3, and similarity_score as values between 0.1~1.0.
-
-User Information: {information}
-Messages: {messages}
-⚠️ All responses must be written in Korean.
+Important Notes:
+- Use the actual profileId from the candidates above
+- Use the exact similarity scores provided above accurately
+- Please strictly follow the response format
 """
 
 exception_prompt = """

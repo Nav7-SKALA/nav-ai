@@ -1,108 +1,104 @@
-import chromadb
-from sentence_transformers import SentenceTransformer
+from langchain_chroma import Chroma
+from langchain_community.embeddings import SentenceTransformerEmbeddings
+from langchain.schema import Document
 import os
-import re
+from config import DOCS_DIR, DB_PATH
 
-def create_vector_db(docs_directory, db_path="./chroma_db", collection_name="employee_documents"):
+
+def ensure_employee_vector_db_exists(docs_directory=DOCS_DIR, career_titles=None, db_path=DB_PATH, collection_name="employee_documents"):
     """
-    직원 문서를 ChromaDB에 저장
+    직원 벡터 DB가 없으면 생성
+    """
+    if os.path.exists(db_path) and os.path.isdir(db_path) and len(os.listdir(db_path)) > 0:
+        print(f"✅ 직원 벡터 DB 이미 존재: {db_path}")
+        # 기존 벡터스토어 로드
+        embeddings = SentenceTransformerEmbeddings(model_name='jhgan/ko-sroberta-multitask')
+        vectorstore = Chroma(
+            collection_name=collection_name,
+            embedding_function=embeddings,
+            persist_directory=db_path
+        )
+        return vectorstore
+
+    print("📦 직원 벡터 DB 생성 시작")
+    return build_employee_vector_db(docs_directory, career_titles, db_path, collection_name)
+
+
+def build_employee_vector_db(docs_directory, career_titles=None, db_path=DB_PATH, collection_name="employee_documents"):
+    """
+    직원 문서를 LangChain Chroma에 저장 (강제 재생성)
     
     Args:
         docs_directory: 문서 디렉토리 경로
+        career_titles: 사원번호:커리어타이틀 딕셔너리 (선택적)
         db_path: ChromaDB 저장 경로
         collection_name: 컬렉션 이름
     """
-    # 모델 로드
-    model = SentenceTransformer('jhgan/ko-sroberta-multitask')
+    if not os.path.exists(docs_directory):
+        raise FileNotFoundError(f"문서 디렉토리가 존재하지 않습니다: {docs_directory}")
     
-    # ChromaDB 클라이언트 생성
-    client = chromadb.PersistentClient(path=db_path)
+    # LangChain 임베딩 모델 로드
+    embeddings = SentenceTransformerEmbeddings(model_name='jhgan/ko-sroberta-multitask')
     
-    # 기존 컬렉션이 있으면 삭제하고 새로 만들기
-    try:
-        client.delete_collection(collection_name)  # 기존 컬렉션 삭제
-    except:
-        pass  # 컬렉션이 없으면 무시
-        
-    collection = client.create_collection(collection_name)  # 새 컬렉션 생성
-    all_documents = []
-    all_metadatas = []
-    all_ids = []
+    # 파일명 오름차순 정렬
+    txt_files = [f for f in os.listdir(docs_directory) if f.endswith('.txt')]
+    txt_files.sort()
+    
+    if not txt_files:
+        raise FileNotFoundError(f"txt 파일이 없습니다: {docs_directory}")
+    
+    documents = []
     
     # 문서 처리
-    for filename in os.listdir(docs_directory):
-        if filename.endswith('.txt'):
-            file_path = os.path.join(docs_directory, filename)
-            employee_id = filename.split('_')[0]  # EMP-202827
-            
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            # 각 프로젝트별로 분리
-            projects = content.split('\n\n')
-            
-            for i, project in enumerate(projects):
-                if project.strip():
-                    # 고유 ID 생성
-                    doc_id = f"{employee_id}_project_{i}"
-                    
-                    # 메타데이터 생성
-                    metadata = {
-                        'employee_id': employee_id,
-                        'project_index': i
-                    }
-                    
-                    # 커리어타이틀이 있다면 추가 (예시)
-                    # metadata['career_title'] = get_career_title(employee_id)
-                    
-                    all_documents.append(project.strip())
-                    all_metadatas.append(metadata)
-                    all_ids.append(doc_id)
+    for idx, filename in enumerate(txt_files, 1):
+        file_path = os.path.join(docs_directory, filename)
+        employee_id = filename.split('.')[0]  # EMP-202827 (확장자 제거)
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # 메타데이터 생성
+        metadata = {
+            "profileId": idx,
+            'employee_id': employee_id,
+            'career_title': career_titles.get(employee_id, "") if career_titles else ""
+        }
+        
+        # Document 객체 생성
+        doc = Document(
+            page_content=content,
+            metadata=metadata
+        )
+        
+        documents.append(doc)
     
-    # 임베딩 생성
-    embeddings = model.encode(all_documents)
-    
-    # ChromaDB에 저장
-    collection.add(
-        embeddings=embeddings.tolist(),
-        documents=all_documents,
-        metadatas=all_metadatas,
-        ids=all_ids
+    # 벡터스토어 생성 및 문서 추가
+    vectorstore = Chroma.from_documents(
+        documents=documents,
+        embedding=embeddings,
+        collection_name=collection_name,
+        persist_directory=db_path
     )
     
-    print(f"총 {len(all_documents)}개 문서를 벡터 DB에 저장했습니다.")
-    return collection
+    print(f"✅ 직원 벡터 DB 저장 완료: {db_path} (총 {len(documents)}개 문서)")
+    return vectorstore
 
-def search_documents(collection, query, model, n_results=5):
-    """
-    벡터 DB에서 문서 검색
+# # 사용 예시
+# if __name__ == "__main__":
+#     career_titles_dict = {
+#         'EMP-198261': '시니어 컨설턴트',
+#         'EMP-202827': '수석 PM'
+#     }
     
-    Args:
-        collection: ChromaDB 컬렉션
-        query: 검색 쿼리
-        model: 임베딩 모델
-        n_results: 반환할 결과 수
-    """
-    query_embedding = model.encode([query])
+#     vectorstore = ensure_employee_vector_db_exists(DOCS_DIR, career_titles_dict)
     
-    results = collection.query(
-        query_embeddings=query_embedding.tolist(),
-        n_results=n_results
-    )
+#     # 올바른 방법: vectorstore 객체의 메서드 직접 호출
+#     scored_results = vectorstore.similarity_search_with_score(
+#         "profileId가 1인 사람 찾아줘", 
+#         k=3  # n_results가 아니라 k
+#     )
     
-    return results
-
-# 사용 예시
-if __name__ == "__main__":
-    # 벡터 DB 생성
-    collection = create_vector_db("emp_docs")
-    
-    # 검색용 모델 로드
-    model = SentenceTransformer('jhgan/ko-sroberta-multitask')
-    
-    # 검색 테스트
-    results = search_documents(collection, "금융 도메인 PM", model, n_results=3)
-    
-    for i, doc in enumerate(results['documents'][0]):
-        print(f"\n{i+1}. {doc}")
-        print(f"메타데이터: {results['metadatas'][0][i]}")
+#     for i, (doc, score) in enumerate(scored_results):
+#         print(f"\n{i+1}번째 문서 (거리 점수: {score:.4f}):")
+#         print(f"메타데이터: {doc.metadata}")
+#         print(f"내용: {doc.page_content[:200]}...")

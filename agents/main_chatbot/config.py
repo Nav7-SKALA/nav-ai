@@ -8,6 +8,7 @@ AGENT_DIR = {'main_chatbot': os.path.join(AGENT_ROOT, "main_chatbot"),
              'persona_chat': os.path.join(AGENT_ROOT, "persona_chat"),
              'summary': os.path.join(AGENT_ROOT, "summary"),
             }
+DB_PATH=os.path.join(BASE_DIR, "db")
 
 # 모델 파라미터
 MODEL_NAME="gpt-4o-mini"
