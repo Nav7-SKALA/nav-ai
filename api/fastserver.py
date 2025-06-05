@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Optional
+from typing import Any, Optional, List, Union
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
@@ -41,7 +41,7 @@ class CareerPathResult(BaseModel):
     agent: str = Field(
         ..., example="LearningPath", description="사용된 에이전트 이름"
     )
-    text: str = Field(
+    text: Union[str, List[Any]] = Field(
         ...,
         example=(
             "다음은 클라우드 관련 강의 정보입니다:\n\n"
@@ -50,7 +50,6 @@ class CareerPathResult(BaseModel):
             "이 강의는 클라우드 컴퓨팅의 기본 개념을 배우고 싶으신 분들에게 적합합니다. "
             "추가적인 클라우드 관련 강의가 필요하시면 말씀해 주세요!"
         ),
-        description="에이전트가 생성한 답변 텍스트",
     )
 
 
@@ -205,11 +204,12 @@ def career_path(request: CareerPathRequest):
     graph = create_workflow()
     initial_state = create_initial_state(request.user_query)
 
+
     try:
         result = graph.invoke(initial_state)
         result_content = create_response(result)
-
-        success_content = SuccessContent(success=True, result=CareerPathResult(**result_content))
+        career_result = CareerPathResult(**result_content)
+        success_content = SuccessContent(success=True, result=career_result)
         return CareerPathResponse(content=success_content)
 
     ## 테스트를 위해 에러 발생 시 하드코딩 결과 입력
@@ -217,7 +217,7 @@ def career_path(request: CareerPathRequest):
         result_content = {
             "agent": "LearningPath",
             "text": (
-                "(하드코딩ㅜㅜ)다음은 클라우드 관련 강의 정보입니다:\n\n"
+                "(하드코딩) 다음은 클라우드 관련 강의 정보입니다:\n\n"
                 "1. **클라우드 컴퓨팅 기초 (Cloud 101)**\n"
                 "   - [강의 링크]"
                 "(https://www.coursera.org/learn/cloud-computing-basics-ko)\n\n"
@@ -262,6 +262,7 @@ def career_path(request: CareerPathRequest):
     #         status_code=500,
     #         detail=f"서버 내부 오류: {str(e)}",
     #     )
+
 @app.post("/apis/v1/rolemodel")
 def rolemodel():
     return "rolemodel: cloud 마스터"
