@@ -77,16 +77,16 @@ def create_initial_state(user_query: str) -> AgentState:
     }
 
 def create_response(result):
-    result_content = {'content': {}}
-    content_dict = {"success": True, "result": {}}
     contents = {}
     for message in result['messages'][1:]:
         contents['agent'] = message.name
-        contents['text'] = message.content
-    content_dict['result'] = contents
-    result_content['content'] = content_dict
+        if message.name == 'RoleModel':
+            import json
+            contents['text'] = json.loads(message.content)
+        else:
+            contents['text'] = message.content
     
-    return result_content
+    return contents
 
 def run_workflow(user_query: str):
     """워크플로우 실행"""
