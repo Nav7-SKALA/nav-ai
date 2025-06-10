@@ -7,6 +7,7 @@ AGENT_ROOT = os.path.join(BASE_DIR, "agents")
 AGENT_DIR = {'main_chatbot': os.path.join(AGENT_ROOT, "main_chatbot"),
              'persona_chat': os.path.join(AGENT_ROOT, "persona_chat"),
              'summary': os.path.join(AGENT_ROOT, "summary"),
+             'career_summary': os.path.join(AGENT_ROOT, "career_summary")
             }
 
 # 모델 파라미터
