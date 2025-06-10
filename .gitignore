@@ -1,0 +1,22 @@
+
+
+.env
+poetry.lock
+
+# env
+.vscode/
+.env
+
+
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
+
+.DS_Store
+
+# 데이터 관련 파일들
+vector_store/data/
+vector_store/chroma_db/
+*.csv
+*.txt
+

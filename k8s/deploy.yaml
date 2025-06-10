@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nav7-ai-deploy
+  labels:
+    app: nav7-ai
+  namespace: sk-team-07   # 필요에 따라 네임스페이스 변경
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nav7-ai
+  template:
+    metadata:
+      labels:
+        app: nav7-ai
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: nav7-ai
+
+          image: amdp-registry.skala-ai.com/skala25a/sk-nav7-ai:1.0.0-55-6df3a1cd1fcb
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: OPENAI_API_KEY
+            - name: TAVILY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: TAVILY_API_KEY
+            - name: IMAGE_REGISTRY
+              value: "amdp-registry.skala-ai.com/skala25a"
+            - name: IMAGE_NAME
+              value: "nav7-ai"
+            - name: IMAGE_TAG
+              value: "1.0.0"
+            - name: PORT
+              value: "8000"
+
