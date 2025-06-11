@@ -17,11 +17,12 @@ import uvicorn
 # 프로젝트 경로 설정
 from config import BASE_DIR, AGENT_ROOT, AGENT_DIR
 
-# sys.path.append(BASE_DIR)
+sys.path.append(BASE_DIR)
 # sys.path.append(AGENT_DIR['career_summary'])
-# sys.path.append(AGENT_DIR['persona_chat'])
-from agents.career_summary.career_summary_agent import get_career_summary
-from agents.persona_chat.persona_chat_agent import init_chat, chat
+sys.path.append(AGENT_DIR['persona_chat'])
+from agents.persona_chat.persona_chat_agent import chat_with_session
+# from agents.career_summary.career_summary_agent import get_career_summary
+
 # sys.path.append(AGENT_ROOT)
 # sys.path.append(AGENT_DIR["main_chatbot"])
 # from main_chatbot.graph import create_workflow, create_initial_state, create_response
@@ -268,35 +269,55 @@ app = FastAPI(
 #     #     )
 
 class RoleChatRequest(BaseModel):
-   employee_id: str
-   user_message: str
+    employee_id: str
+    user_message: str
+    session_id: Optional[str] = None
 
-@app.post("/apis/v1/rolemodel")
+class ChatResponse(BaseModel):
+    success: bool
+    response: Optional[str] = None
+    session_id: Optional[str] = None
+    error: Optional[str] = None
+
+@app.post("/apis/v1/rolemodel", response_model=ChatResponse)
 def rolemodel(request: RoleChatRequest):
-   try:
-       # 1. 사원 정보로 채팅 초기화
-       if not init_chat(request.employee_id):
-           return {"success": False, "error": "사원 정보를 찾을 수 없습니다."}
-       
-       # 2. 사용자 메시지로 대화
-       response = chat(request.user_message)
-       
-       return {"success": True, "response": response}
-       
-   except Exception as e:
-       return {"success": False, "error": str(e)}
+    """역할 모델과 채팅 - 단일 API"""
+    try:
+        result = chat_with_session(
+            employee_id=request.employee_id,
+            user_message=request.user_message,
+            session_id=request.session_id
+        )
+        
+        if result["success"]:
+            return ChatResponse(
+                success=True,
+                response=result["response"],
+                session_id=result["session_id"]
+            )
+        else:
+            return ChatResponse(
+                success=False,
+                error=result["error"]
+            )
+            
+    except Exception as e:
+        return ChatResponse(
+            success=False,
+            error=str(e)
+        )
 
 
-class EmployeeRequest(BaseModel):
-   employee_id: str
+# class EmployeeRequest(BaseModel):
+#    employee_id: str
 
-@app.post("/apis/v1/career-summary")
-def career_summary(request: EmployeeRequest):
-   try:
-       summary = get_career_summary(request.employee_id)
-       return {"success": True, "summary": summary}
-   except Exception as e:
-       return {"success": False, "error": str(e)}
+# @app.post("/apis/v1/career-summary")
+# def career_summary(request: EmployeeRequest):
+#    try:
+#        summary = get_career_summary(request.employee_id)
+#        return {"success": True, "summary": summary}
+#    except Exception as e:
+#        return {"success": False, "error": str(e)}
 
 if __name__ == "__main__":
     import argparse
