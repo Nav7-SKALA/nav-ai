@@ -1,5 +1,6 @@
 import os
 from tavily import TavilyClient
+from typing import List
 
 async def search_tavily(keyword: str) -> List[str]:
     tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
