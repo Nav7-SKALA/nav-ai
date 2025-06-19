@@ -181,4 +181,18 @@ Examples:
 [Entered question: "{messages}"]
 ⚠️ All responses must be written in Korean.
 """
+#hj
+keyword_prompt = """
+너는 사용자 질문에서 기술적 키워드를 추출하는 전문가야.
 
+다음 조건을 따라 **정확히 3개의 기술 키워드**를 한 줄에 하나씩 추출해줘.
+
+조건:
+1. 사용자 질문에 명시적으로 등장한 기술 키워드
+2. 질문 문맥과 관련 있는 AI 또는 데이터 기반 기술 키워드 1~2개 포함
+3. 형식은 단순히 키워드만 출력 
+4. 키워드는 반드시 **영어로만 출력**
+5. 불필요한 설명 없이 **키워드 3개만 줄바꿈으로 출력**
+(예: "machine learning")
+사용자 질문: {messages}
+"""
