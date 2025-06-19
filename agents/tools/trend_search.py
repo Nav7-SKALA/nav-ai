@@ -17,7 +17,14 @@ async def search_all_sources(keyword: str) -> Dict[str, List[str]]:
         "tavily": tavily
     }
 
-# 5. 여러 키워드에 대해 병렬 검색
+# 여러 키워드에 대해 병렬 검색
 async def trend_analysis_for_keywords(keywords: List[str]) -> List[Dict]:
     results = await asyncio.gather(*[search_all_sources(k) for k in keywords])
     return results
+
+def parse_keywords(raw_output: str) -> list:
+    """
+    LLM 출력 결과에서 키워드 목록을 파싱하는 함수.
+    각 줄을 키워드로 인식하며 공백이나 빈 줄은 제외.
+    """
+    return [line.strip() for line in raw_output.strip().splitlines() if line.strip()]
