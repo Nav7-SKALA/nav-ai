@@ -5,10 +5,10 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from pydantic import BaseModel, Field
-from openai import (
+from openai.error import (
     APIError,
     AuthenticationError,
-    APITimeoutError,
+    # APITimeoutError,
     RateLimitError,
     APIConnectionError,
 )
