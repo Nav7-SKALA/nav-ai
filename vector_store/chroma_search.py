@@ -38,8 +38,9 @@ def get_top5_info(query_text, user_id):
     """상위 5명 간단 정보"""
     client = get_chroma_client()
     collection = client.get_collection(name=os.getenv("JSON_HISTORY_COLLECTION_NAME"))
-    
-    embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"))
+    model_path="c:/Users/Administrator/Desktop/김현준/최종프로젝트/nav-ai/model/ko-sroberta-multitask"
+    embedding_model = SentenceTransformer(model_path)
+    # embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"))
     query_embedding = embedding_model.encode([query_text]).tolist()
     
     results = collection.query(query_embeddings=query_embedding, n_results=20, include=['metadatas'])

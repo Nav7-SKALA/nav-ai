@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, END, START
 from agents.main_chatbot.developstate import DevelopState
-from typing import Literal
-from agents.main_chatbot.agent import intent_analize, rewrite, exception, path, role_model,trend, chat_summary
+from typing import Literal, Dict, Any
+from agents.main_chatbot.agent import intent_analize, rewrite, exception, path, role_model,trend, chat_summary, ragwrite
 ## Router
 # 1차 분기: EXCEPTION 여부 판단
 def route_from_intent(state: DevelopState) -> Literal["rewriter_node", "EXCEPTION"]:
@@ -28,11 +28,12 @@ def createworkflow():
     workflow = StateGraph(DevelopState)
     workflow.add_node("intent_analize", intent_analize)
     workflow.add_node("rewriter_node", rewrite)
+    workflow.add_node("ragwriter_node", ragwrite)
     workflow.add_node("EXCEPTION", exception) 
     workflow.add_node("path_recommend", path)
     workflow.add_node("role_model", role_model)
     workflow.add_node("trend_path", trend)
-    workflow.add_node("chat_summary", chat_summary)
+    workflow.add_node("chatting_summary", chat_summary)
     workflow.add_edge(START, "intent_analize")
     workflow.add_conditional_edges(
         "intent_analize",
@@ -42,8 +43,9 @@ def createworkflow():
             "EXCEPTION": "EXCEPTION"           # 예외 의도 → 바로 예외 처리
         }
     )
+    workflow.add_edge("rewriter_node", "ragwriter_node")
     workflow.add_conditional_edges(
-        "rewriter_node",
+        "ragwriter_node",
         route_to_agent,
         {
             "path_recommend": "path_recommend", 
@@ -51,11 +53,11 @@ def createworkflow():
             "trend_path": "trend_path"
         }
     )
-    workflow.add_edge("path_recommend", "chat_summary")
-    workflow.add_edge("role_model", "chat_summary")
-    workflow.add_edge("trend_path", "chat_summary")
-    workflow.add_edge("EXCEPTION", "chat_summary")  
-    workflow.add_edge("chat_summary", END)  
+    workflow.add_edge("path_recommend", "chatting_summary")
+    workflow.add_edge("role_model", "chatting_summary")
+    workflow.add_edge("trend_path", "chatting_summary")
+    workflow.add_edge("EXCEPTION", "chatting_summary")  
+    workflow.add_edge("chatting_summary", END)  
     graph = workflow.compile()
     return graph
 
@@ -65,16 +67,15 @@ def create_initial_state(user_id: str, input_query: str, career_summary: str) ->
         "user_id": user_id,
         "input_query": input_query,
         "career_summary": career_summary,
-        "intent": None,
-        "rewrited_query": None,
-        "rag_query": None,
-        "result": None,
-        "reference_employees": None,  
-        "messages": None,
-        "success":None,
+        "chat_summary":"이전 대화 없음",
+        "intent": str,
+        "rewrited_query": str,
+        "rag_query": str,
+        "result": Dict[str, Any],  
+        "messages": [],
     }
 
-def run_mainchatbot(user_id: str, input_query: str, career_summary: str):
+async def run_mainchatbot(user_id: str, input_query: str, career_summary: str):
     graph = createworkflow()
-    result = graph.invoke(create_initial_state(user_id, input_query, career_summary))
+    result = await graph.ainvoke(create_initial_state(user_id, input_query, career_summary))
     return result

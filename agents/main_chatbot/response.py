@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 class PromptWrite(BaseModel):
     """re-write prompt"""
@@ -14,7 +14,8 @@ class PathRecommendResult(BaseModel):
     career_path_text: str = Field(
         description="커리어 증진 경로 추천 텍스트 자료"
     )
-    career_path_roadmap: Dict[str, Any] = Field(
+    career_path_roadmap: Optional[Dict[str, Any]] = Field(
+        default=None,
         description="커리어 증진 경로 추천 로드맵"
     )
 

@@ -14,6 +14,7 @@ class AgentState(TypedDict):
 
 class DevelopState(TypedDict):
     user_id: str
+    chat_summary: str
     input_query: str
     career_summary: str
     intent: str

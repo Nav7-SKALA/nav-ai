@@ -1,4 +1,4 @@
-from agents.main_chatbot.prompt import exception_prompt, intent_prompt,rewrite_prompt, rag_prompt, path_prompt,role_prompt, keyword_prompt,chat_summary_prompt
+from agents.main_chatbot.prompt import exception_prompt, intent_prompt,rewrite_prompt, rag_prompt, path_prompt,role_prompt, keyword_prompt,chat_summary_prompt, trend_prompt
 from agents.main_chatbot.developstate import DevelopState
 from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE, role, skill_set, domain, job
 from agents.main_chatbot.response import PromptWrite, PathRecommendResult, GroupedRoleModelResult
@@ -47,6 +47,7 @@ def rewrite(state: DevelopState) -> DevelopState:
         user_id = state.get("user_id", "")
         career_summary = state['career_summary']
         intent = state['intent']
+        chat_summary = state['chat_summary']
         if not input_query:
             return {**state, 
                     'result': {'detail': '입력된 질의가 없습니다.'}}
@@ -55,13 +56,14 @@ def rewrite(state: DevelopState) -> DevelopState:
                     "result": {'detail': '사용자 ID가 없습니다.'}}
             
         rewriter_prompt = PromptTemplate(
-            input_variables=["career_summary", "user_query", "role", "skill_set", "domain","intent"],
+            input_variables=["career_summary","chat_summary", "user_query", "role", "skill_set", "domain","intent"],
             template=rewrite_prompt
             ) 
         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
         rewriter_chain = rewriter_prompt | llm.with_structured_output(PromptWrite)
         rewritten_result = rewriter_chain.invoke({
             "career_summary": career_summary,
+            "chat_summary" : chat_summary,
             "user_query": input_query,
             "intent": intent,
             "role": role, "skill_set": skill_set, "domain": domain
@@ -114,7 +116,7 @@ def path(state: DevelopState) -> DevelopState:
         }
     except Exception as e:
         return {**state, 
-                'result': {'text': None,
+                'result': {'text': "invoke"+ str(e),
                            'roadmap' : None
                            },
                 'error' : f"경로 추천 중 오류: {str(e)}"
@@ -186,13 +188,13 @@ async def trend(state: DevelopState) -> DevelopState:
     template=keyword_prompt
     )
     keyword_llm_chain = keyword_prompttamplate | llm
-    keywords = parse_keywords(keyword_llm_chain.invoke({
+    keywords = parse_keywords((keyword_llm_chain.invoke({
         "messages": state.get('input_query')
-    }))
+    })).content)
     trend_keyword = await trend_analysis_for_keywords(keywords)
     trend_prompttamplate = PromptTemplate(
     input_variables=["messages", "keyword_result"],
-    template=trend_prompttamplate
+    template=trend_prompt
     )
     trend_llm_chain = trend_prompttamplate | llm
     result = trend_llm_chain.invoke({
@@ -207,14 +209,15 @@ async def trend(state: DevelopState) -> DevelopState:
 def chat_summary(state: DevelopState) -> DevelopState:
     llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
     chat_summary_prompttamplate = PromptTemplate(
-    input_variables=["user_question","answer"],
+    input_variables=["chat_summary","user_question","answer"],
     template=chat_summary_prompt
     )
     chat_summary_llm_chain = chat_summary_prompttamplate | llm
     result = chat_summary_llm_chain.invoke({
+        "chat_summary": state.get('chat_summary'),
         "user_question": state.get('input_query'),
         "answer": state.get('result')
     })
     return {**state,
-        'chat_summary': {'text': result.content},
+        'chat_summary': result.content,
         'messages': AIMessage(result.content)}

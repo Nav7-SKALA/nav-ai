@@ -22,7 +22,7 @@ from api.config import BASE_DIR, AGENT_ROOT, AGENT_DIR
 sys.path.append(BASE_DIR)
 sys.path.append(AGENT_ROOT)
 sys.path.append(AGENT_DIR["main_chatbot"])
-from main_chatbot.graph import create_workflow, create_initial_state, create_response
+from main_chatbot.graph import create_workflow, create_response
 
 app = FastAPI(
     docs_url="/apis/docs",
@@ -98,10 +98,10 @@ class CareerPathRequest(BaseModel):
     """
     /apis/v1/career-path 요청 바디 스키마
     """
-    user_query: str = Field(..., example="클라우드 관련 강의 정보 알려줘")
+    user_query: str = Field(..., example="백엔드 개발 관련 커리어 패스를 알고 싶어요")
     session_id: str = Field(..., example="session_id")
-    user_id: str = Field(..., example="user_12345")
-    career_summary: str = Field(...,example="사용자의 커리어 요약 정보")
+    user_id: str = Field(..., example="EMP-100014")
+    career_summary: str = Field(...,example="3년차 데이터 분석가, Python과 SQL 경험 보유")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -200,12 +200,12 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
         "답변을 반환합니다."
     ),
 )
-def career_path(request: CareerPathRequest):
+async def career_path(request: CareerPathRequest):
     """
     메인 챗봇 워크플로우를 실행하여 결과 반환
     """
     try:
-        result_state = run_mainchatbot(request.user_id,request.user_query,request.career_summary)
+        result_state = await run_mainchatbot(request.user_id,request.user_query,request.career_summary)
         response_data = {
         "user_id": result_state.get("user_id"),
         "type": result_state.get("intent"),
@@ -228,7 +228,7 @@ def career_path(request: CareerPathRequest):
         "success": False,
         "error": str(e)
         }
-        return JSONResponse(content=result_content.dict(exclude_none=False))
+        return JSONResponse(content=response_data)
 
     ## 원래 에러 핸들링 코드 
     # except APITimeoutError as e:
