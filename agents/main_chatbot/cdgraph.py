@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, END, START
 from agents.main_chatbot.developstate import DevelopState
 from typing import Literal
-from agents.main_chatbot.agent import intent_analize, rewrite, exception, path, role_model,trend
+from agents.main_chatbot.agent import intent_analize, rewrite, exception, path, role_model,trend, chat_summary
 ## Router
 # 1차 분기: EXCEPTION 여부 판단
 def route_from_intent(state: DevelopState) -> Literal["rewriter_node", "EXCEPTION"]:
@@ -32,6 +32,7 @@ def createworkflow():
     workflow.add_node("path_recommend", path)
     workflow.add_node("role_model", role_model)
     workflow.add_node("trend_path", trend)
+    workflow.add_node("chat_summary", chat_summary)
     workflow.add_edge(START, "intent_analize")
     workflow.add_conditional_edges(
         "intent_analize",
@@ -50,10 +51,11 @@ def createworkflow():
             "trend_path": "trend_path"
         }
     )
-    workflow.add_edge("path_recommend", END)
-    workflow.add_edge("role_model", END)
-    workflow.add_edge("trend_path", END)
-    workflow.add_edge("EXCEPTION", END)  
+    workflow.add_edge("path_recommend", "chat_summary")
+    workflow.add_edge("role_model", "chat_summary")
+    workflow.add_edge("trend_path", "chat_summary")
+    workflow.add_edge("EXCEPTION", "chat_summary")  
+    workflow.add_edge("chat_summary", END)  
     graph = workflow.compile()
     return graph
 
