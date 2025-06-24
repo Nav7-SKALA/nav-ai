@@ -1,4 +1,4 @@
-from agents.main_chatbot.prompt import exception_prompt, intent_prompt,rewrite_prompt, rag_prompt, path_prompt,role_prompt, keyword_prompt
+from agents.main_chatbot.prompt import exception_prompt, intent_prompt,rewrite_prompt, rag_prompt, path_prompt,role_prompt, keyword_prompt,chat_summary_prompt
 from agents.main_chatbot.developstate import DevelopState
 from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE, role, skill_set, domain, job
 from agents.main_chatbot.response import PromptWrite, PathRecommendResult, GroupedRoleModelResult
@@ -107,18 +107,20 @@ def path(state: DevelopState) -> DevelopState:
         return {
             **state,
             'result': {'text': result.career_path_text,
-                        'roadmap': result.career_path_roadmap
+                        'roadmaps': result.career_path_roadmap
                         },
             'messages': [AIMessage(result.career_path_text),
                          AIMessage(json.dumps(result.career_path_roadmap, ensure_ascii=False))]
         }
     except Exception as e:
         return {**state, 
-                'result': {'text': f"경로 추천 중 오류: {str(e)}",
+                'result': {'text': None,
                            'roadmap' : None
-                           }}
+                           },
+                'error' : f"경로 추천 중 오류: {str(e)}"
+                           }
     
-def role_model(state: DevelopState, k=8) -> DevelopState:
+def role_model(state: DevelopState) -> DevelopState:
     """
     롤모델 그룹 생성 노드
     현재: 명시적으로 내부에서 노드 순차적 실행하게 만들어 둠
@@ -144,8 +146,8 @@ def role_model(state: DevelopState, k=8) -> DevelopState:
             role_model_dict = {
                 'group_id': f'group_{i}',
                 'group_name': group.group_name,
-                'group_description': group.group_description,
-                'member_count': group.member_count,
+                # 'group_description': group.group_description,
+                # 'member_count': group.member_count,
                 # 'role_model_name': group.role_model.name,
                 'current_position': group.role_model.current_position,
                 'experience_years': group.role_model.experience_years,
@@ -170,43 +172,49 @@ def role_model(state: DevelopState, k=8) -> DevelopState:
         return {
             **state,
             'result': {
-                'agent': 'role_model',
-                'text': role_model_list,
+                'rolemodels': role_model_list,
             },
             'messages': AIMessage(summary_text)
         }
     except Exception as e:
-        return {**state, 'result': {'detail': f'롤모델 생성 중 오류 발생: {str(e)}'}}
+        return {**state, 'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
     
-async def trend(state: DevelopState, k=8) -> DevelopState:
-    try:
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
-        keyword_prompttamplate = PromptTemplate(
-        input_variables=["messages"],
-        template=keyword_prompt
-        )
-        keyword_llm_chain = keyword_prompttamplate | llm
-        keywords = parse_keywords(keyword_llm_chain.invoke({
-            "messages": state.get('input_query')
-        }))
-        trend_keyword = await trend_analysis_for_keywords(keywords)
-        trend_prompttamplate = PromptTemplate(
-        input_variables=["messages", "keyword_result"],
-        template=trend_prompttamplate
-        )
-        trend_llm_chain = trend_prompttamplate | llm
-        result = trend_llm_chain.invoke({
-            "messages": state.get('input_query'),
-            "keyword_result": trend_keyword,
-        })
-        return {**state,
-            'result': {'text': result.content},
-            'messages': AIMessage(result.content)}
-    except Exception as e:
-        return {
-            **state, 
-            'result': {
-                'text': f'트렌드 취합 중 오류 발생: {str(e)}'
-        }
-        }
+async def trend(state: DevelopState) -> DevelopState:
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+    keyword_prompttamplate = PromptTemplate(
+    input_variables=["messages"],
+    template=keyword_prompt
+    )
+    keyword_llm_chain = keyword_prompttamplate | llm
+    keywords = parse_keywords(keyword_llm_chain.invoke({
+        "messages": state.get('input_query')
+    }))
+    trend_keyword = await trend_analysis_for_keywords(keywords)
+    trend_prompttamplate = PromptTemplate(
+    input_variables=["messages", "keyword_result"],
+    template=trend_prompttamplate
+    )
+    trend_llm_chain = trend_prompttamplate | llm
+    result = trend_llm_chain.invoke({
+        "messages": state.get('input_query'),
+        "keyword_result": trend_keyword,
+    })
+    return {**state,
+        'result': {'text': result.content},
+        'messages': AIMessage(result.content)}
 
+
+def chat_summary(state: DevelopState) -> DevelopState:
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+    chat_summary_prompttamplate = PromptTemplate(
+    input_variables=["user_question","answer"],
+    template=chat_summary_prompt
+    )
+    chat_summary_llm_chain = chat_summary_prompttamplate | llm
+    result = chat_summary_llm_chain.invoke({
+        "user_question": state.get('input_query'),
+        "answer": state.get('result')
+    })
+    return {**state,
+        'chat_summary': {'text': result.content},
+        'messages': AIMessage(result.content)}
