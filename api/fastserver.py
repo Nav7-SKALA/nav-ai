@@ -1,11 +1,13 @@
 import sys
 from typing import Any, Optional, List, Union
-
+from dotenv import load_dotenv
+load_dotenv("api/.env")
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from pydantic import BaseModel, Field
-from openai.error import (
+from agents.main_chatbot.cdgraph import run_mainchatbot,create_initial_state
+from openai import (
     APIError,
     AuthenticationError,
     # APITimeoutError,
@@ -15,7 +17,7 @@ from openai.error import (
 import uvicorn
 
 # 프로젝트 경로 설정
-from config import BASE_DIR, AGENT_ROOT, AGENT_DIR
+from api.config import BASE_DIR, AGENT_ROOT, AGENT_DIR
 
 sys.path.append(BASE_DIR)
 sys.path.append(AGENT_ROOT)
@@ -99,6 +101,7 @@ class CareerPathRequest(BaseModel):
     user_query: str = Field(..., example="클라우드 관련 강의 정보 알려줘")
     session_id: str = Field(..., example="session_id")
     user_id: str = Field(..., example="user_12345")
+    career_summary: str = Field(...,example="사용자의 커리어 요약 정보")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -201,35 +204,31 @@ def career_path(request: CareerPathRequest):
     """
     메인 챗봇 워크플로우를 실행하여 결과 반환
     """
-    graph = create_workflow()
-    initial_state = create_initial_state(request.user_query)
-
-
     try:
-        result = graph.invoke(initial_state)
-        result_content = create_response(result)
-        career_result = CareerPathResult(**result_content)
-        success_content = SuccessContent(success=True, result=career_result)
-        return CareerPathResponse(content=success_content)
+        result_state = run_mainchatbot(request.user_id,request.user_query,request.career_summary)
+        response_data = {
+        "user_id": result_state.get("user_id"),
+        "type": result_state.get("intent"),
+        "chat_summary": result_state.get("chat_summary"),
+        "result": result_state.get("result"),
+        "success": True,
+        "error": None
+        }
+        return JSONResponse(content=response_data)
 
     ## 테스트를 위해 에러 발생 시 하드코딩 결과 입력
     except Exception as e:
-        result_content = {
-            "agent": "LearningPath",
-            "text": (
-                "(하드코딩) 다음은 클라우드 관련 강의 정보입니다:\n\n"
-                "1. **클라우드 컴퓨팅 기초 (Cloud 101)**\n"
-                "   - [강의 링크]"
-                "(https://www.coursera.org/learn/cloud-computing-basics-ko)\n\n"
-                "이 강의는 클라우드 컴퓨팅의 기본 개념을 배우고 싶으신 "
-                "분들에게 적합합니다. 추가적인 클라우드 관련 강의가 필요하시면 "
-                "말씀해 주세요!"
-            ),
+        result_content = create_initial_state(request.user_id, request.user_query, request.career_summary)
+        result_content["success"]=False
+        response_data = {
+        "user_id": request.user_id,
+        "type": None,
+        "chat_summary": None,
+        "result": None,
+        "success": False,
+        "error": str(e)
         }
-        career_result = CareerPathResult(**result_content)
-        success_content = SuccessContent(success=True, result=career_result)
-
-        return CareerPathResponse(content=success_content)
+        return JSONResponse(content=result_content.dict(exclude_none=False))
 
     ## 원래 에러 핸들링 코드 
     # except APITimeoutError as e:

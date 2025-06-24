@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, END, START
-from states import DevelopState
+from agents.main_chatbot.developstate import DevelopState
 from typing import Literal
-from agent import intent_analize, rewrite, exception, path, role_model,trend
+from agents.main_chatbot.agent import intent_analize, rewrite, exception, path, role_model,trend
 ## Router
 # 1차 분기: EXCEPTION 여부 판단
 def route_from_intent(state: DevelopState) -> Literal["rewriter_node", "EXCEPTION"]:
@@ -63,15 +63,16 @@ def create_initial_state(user_id: str, input_query: str, career_summary: str) ->
         "user_id": user_id,
         "input_query": input_query,
         "career_summary": career_summary,
-        "rewrited_query": "",
-        "rag_query": "",
-        "intent": "",
-        "result": {},
-        "reference_employees": [],  
-        "messages": [],
+        "intent": None,
+        "rewrited_query": None,
+        "rag_query": None,
+        "result": None,
+        "reference_employees": None,  
+        "messages": None,
+        "success":None,
     }
 
 def run_mainchatbot(user_id: str, input_query: str, career_summary: str):
-    graph = createworkflow
+    graph = createworkflow()
     result = graph.invoke(create_initial_state(user_id, input_query, career_summary))
     return result

@@ -1,8 +1,8 @@
 import asyncio
 from typing import List, Dict
-from tavily_search import search_tavily
-from reddit_search import search_reddit
-from github_search import search_github
+from agents.tools.tavily_search import search_tavily
+from agents.tools.reddit_search import search_reddit
+from agents.tools.github_search import search_github
 
 async def search_all_sources(keyword: str) -> Dict[str, List[str]]:
     github, reddit, tavily = await asyncio.gather(

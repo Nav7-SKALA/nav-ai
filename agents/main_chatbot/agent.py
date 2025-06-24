@@ -1,13 +1,13 @@
-from prompt import exception_prompt, intent_prompt,rewrite_prompt, rag_prompt, path_prompt,role_prompt, keyword_prompt
-from states import DevelopState
+from agents.main_chatbot.prompt import exception_prompt, intent_prompt,rewrite_prompt, rag_prompt, path_prompt,role_prompt, keyword_prompt
+from agents.main_chatbot.developstate import DevelopState
 from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE, role, skill_set, domain, job
-from response import PromptWrite, PathRecommendResult, GroupedRoleModelResult
+from agents.main_chatbot.response import PromptWrite, PathRecommendResult, GroupedRoleModelResult
 from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from vector_store.chroma_search import find_best_match,get_top5_info
-from tools.trend_search import trend_analysis_for_keywords, parse_keywords
+from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords
 import json
 
 
@@ -24,7 +24,8 @@ def exception(state: DevelopState) -> DevelopState:
     })
     return {
         **state,
-        'result': {'detail': '경력 증진과 무관한 질의 입력됨'},
+        'result': {'text' : result
+                   },
         'messages': AIMessage(content=result, name="EXCEPTION")
     }
 
@@ -105,16 +106,17 @@ def path(state: DevelopState) -> DevelopState:
         })
         return {
             **state,
-            'result': {'agent': 'path_recommend',
-                        'text': [result.career_path_text,
-                                 result.career_path_roadmap]
+            'result': {'text': result.career_path_text,
+                        'roadmap': result.career_path_roadmap
                         },
             'messages': [AIMessage(result.career_path_text),
                          AIMessage(json.dumps(result.career_path_roadmap, ensure_ascii=False))]
         }
     except Exception as e:
         return {**state, 
-                'result': {'detail': f"경로 추천 중 오류: {str(e)}"}}
+                'result': {'text': f"경로 추천 중 오류: {str(e)}",
+                           'roadmap' : None
+                           }}
     
 def role_model(state: DevelopState, k=8) -> DevelopState:
     """
@@ -198,14 +200,13 @@ async def trend(state: DevelopState, k=8) -> DevelopState:
             "keyword_result": trend_keyword,
         })
         return {**state,
-            'result': {'agent': 'trend_path',
-                        'text': result.content},
+            'result': {'text': result.content},
             'messages': AIMessage(result.content)}
     except Exception as e:
         return {
             **state, 
             'result': {
-                'detail': f'트렌드 취합 중 오류 발생: {str(e)}'
+                'text': f'트렌드 취합 중 오류 발생: {str(e)}'
         }
         }
 

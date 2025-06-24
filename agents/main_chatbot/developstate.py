@@ -16,12 +16,8 @@ class DevelopState(TypedDict):
     user_id: str
     input_query: str
     career_summary: str
-
     intent: str
     rewrited_query: str
-    
     rag_query: str
     result: Dict[str, Any]
-    # role_models: str
-    reference_employees: List[Any]
     messages: Annotated[List, add_messages]
