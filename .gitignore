@@ -4,6 +4,8 @@ data/
 
 .env
 poetry.lock
+# Virtual environment
+venv/
 
 # env
 .vscode/
