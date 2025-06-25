@@ -15,7 +15,6 @@ from openai import (
     APIConnectionError,
 )
 import uvicorn
-
 # 프로젝트 경로 설정
 from api.config import BASE_DIR, AGENT_ROOT, AGENT_DIR
 
@@ -23,7 +22,6 @@ sys.path.append(BASE_DIR)
 sys.path.append(AGENT_ROOT)
 sys.path.append(AGENT_DIR["main_chatbot"])
 from main_chatbot.graph import create_workflow, create_response
-
 app = FastAPI(
     docs_url="/apis/docs",
     openapi_url="/apis/openapi.json",
@@ -205,7 +203,7 @@ async def career_path(request: CareerPathRequest):
     메인 챗봇 워크플로우를 실행하여 결과 반환
     """
     try:
-        result_state = await run_mainchatbot(request.user_id,request.user_query,request.career_summary)
+        result_state = await run_mainchatbot(request.user_id,request.user_query,request.career_summary,request.session_id)
         response_data = {
         "user_id": result_state.get("user_id"),
         "type": result_state.get("intent"),
@@ -218,7 +216,7 @@ async def career_path(request: CareerPathRequest):
 
     ## 테스트를 위해 에러 발생 시 하드코딩 결과 입력
     except Exception as e:
-        result_content = create_initial_state(request.user_id, request.user_query, request.career_summary)
+        result_content = create_initial_state(request.user_id, request.user_query, request.career_summary,request.session_id)
         result_content["success"]=False
         response_data = {
         "user_id": request.user_id,

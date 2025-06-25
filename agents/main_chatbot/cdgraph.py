@@ -2,6 +2,7 @@ from langgraph.graph import StateGraph, END, START
 from agents.main_chatbot.developstate import DevelopState
 from typing import Literal, Dict, Any
 from agents.main_chatbot.agent import intent_analize, rewrite, exception, path, role_model,trend, chat_summary, ragwrite
+from db.mongo import get_session_data
 ## Router
 # 1차 분기: EXCEPTION 여부 판단
 def route_from_intent(state: DevelopState) -> Literal["rewriter_node", "EXCEPTION"]:
@@ -61,21 +62,20 @@ def createworkflow():
     graph = workflow.compile()
     return graph
 
-def create_initial_state(user_id: str, input_query: str, career_summary: str) -> DevelopState:
-    
+def create_initial_state(user_id: str, input_query: str, career_summary: str, chat_summary: str) -> DevelopState:
     return {
         "user_id": user_id,
         "input_query": input_query,
         "career_summary": career_summary,
-        "chat_summary":"이전 대화 없음",
-        "intent": str,
-        "rewrited_query": str,
-        "rag_query": str,
-        "result": Dict[str, Any],  
+        "chat_summary":chat_summary,
+        "intent": "",
+        "rewrited_query": "",
+        "rag_query": "",
+        "result": {},  
         "messages": [],
     }
 
-async def run_mainchatbot(user_id: str, input_query: str, career_summary: str):
+async def run_mainchatbot(user_id: str, input_query: str, career_summary: str, session_id: str):
     graph = createworkflow()
-    result = await graph.ainvoke(create_initial_state(user_id, input_query, career_summary))
+    result = await graph.ainvoke(create_initial_state(user_id, input_query, career_summary,get_session_data(session_id)))
     return result
