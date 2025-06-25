@@ -22,6 +22,7 @@ sys.path.append(BASE_DIR)
 sys.path.append(AGENT_ROOT)
 sys.path.append(AGENT_DIR["main_chatbot"])
 from main_chatbot.graph import create_workflow, create_response
+
 app = FastAPI(
     docs_url="/apis/docs",
     openapi_url="/apis/openapi.json",
@@ -97,9 +98,8 @@ class CareerPathRequest(BaseModel):
     /apis/v1/career-path 요청 바디 스키마
     """
     user_query: str = Field(..., example="백엔드 개발 관련 커리어 패스를 알고 싶어요")
-    session_id: str = Field(..., example="session_id")
+    session_id: str = Field(..., example="73b1065c-5850-4602-b935-f45f94f961af")
     user_id: str = Field(..., example="EMP-100014")
-    career_summary: str = Field(...,example="3년차 데이터 분석가, Python과 SQL 경험 보유")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -203,7 +203,7 @@ async def career_path(request: CareerPathRequest):
     메인 챗봇 워크플로우를 실행하여 결과 반환
     """
     try:
-        result_state = await run_mainchatbot(request.user_id,request.user_query,request.career_summary,request.session_id)
+        result_state = await run_mainchatbot(request.user_id,request.user_query,request.session_id)
         response_data = {
         "user_id": result_state.get("user_id"),
         "type": result_state.get("intent"),
@@ -216,8 +216,6 @@ async def career_path(request: CareerPathRequest):
 
     ## 테스트를 위해 에러 발생 시 하드코딩 결과 입력
     except Exception as e:
-        result_content = create_initial_state(request.user_id, request.user_query, request.career_summary,request.session_id)
-        result_content["success"]=False
         response_data = {
         "user_id": request.user_id,
         "type": None,

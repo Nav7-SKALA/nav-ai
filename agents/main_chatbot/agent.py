@@ -43,11 +43,13 @@ def intent_analize(state: DevelopState) -> DevelopState:
 
 def rewrite(state: DevelopState) -> DevelopState:
     try:
+
         input_query = state.get("input_query", "")
         user_id = state.get("user_id", "")
         career_summary = state['career_summary']
         intent = state['intent']
         chat_summary = state['chat_summary']
+        print(input_query+user_id+career_summary+intent+chat_summary)
         if not input_query:
             return {**state, 
                     'result': {'detail': '입력된 질의가 없습니다.'}}
@@ -58,7 +60,8 @@ def rewrite(state: DevelopState) -> DevelopState:
         rewriter_prompt = PromptTemplate(
             input_variables=["career_summary","chat_summary", "user_query", "role", "skill_set", "domain","intent"],
             template=rewrite_prompt
-            ) 
+            )
+        print(rewriter_prompt)
         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
         rewriter_chain = rewriter_prompt | llm.with_structured_output(PromptWrite)
         rewritten_result = rewriter_chain.invoke({
@@ -68,6 +71,7 @@ def rewrite(state: DevelopState) -> DevelopState:
             "intent": intent,
             "role": role, "skill_set": skill_set, "domain": domain
         })
+        print(rewritten_result.new_query)
         return {
             **state, 
             'rewrited_query': rewritten_result.new_query
