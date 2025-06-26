@@ -1,7 +1,7 @@
 import sys
 from typing import Any, Optional, List, Union
-from dotenv import load_dotenv
-load_dotenv("api/.env")
+# from dotenv import load_dotenv
+# load_dotenv("api/.env")
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError, ResponseValidationError

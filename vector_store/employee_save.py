@@ -13,8 +13,8 @@ def create_vector_db(docs_directory, db_path="./chroma_db", collection_name="emp
         collection_name: 컬렉션 이름
     """
     # 모델 로드
-    model = SentenceTransformer('jhgan/ko-sroberta-multitask')
-    
+    model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"))
+
     # ChromaDB 클라이언트 생성
     client = chromadb.PersistentClient(path=db_path)
     
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     collection = create_vector_db("emp_docs")
     
     # 검색용 모델 로드
-    model = SentenceTransformer('jhgan/ko-sroberta-multitask')
+    model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"))
     
     # 검색 테스트
     results = search_documents(collection, "금융 도메인 PM", model, n_results=3)
