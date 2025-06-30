@@ -9,5 +9,5 @@ def get_session_data(session_id:str):
         {"sessionId": session_id},
         sort=[("createdAt", DESCENDING)]
     )
-    return doc.get("answer") if doc else "None"
-    # return doc.get("chat_summary") if doc else None
+    # return doc.get("answer") if doc else "None"
+    return doc.get("chat_summary") if doc else None
