@@ -5,10 +5,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-from prompt import careerSummary_prompt
-
-# from tools.vector_search_tool import vectorDB_search
-# from tools.postgres_tool import RDB_search
+from prompt import careerTitle_prompt
 
 # 환경변수 로드
 load_dotenv()
@@ -24,24 +21,24 @@ TEMPERATURE = os.getenv("TEMPERATURE")
 llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
 
 
-# CareerSummary 프롬프트
+# CareerTitle 프롬프트
 cs_prompt = PromptTemplate(
     input_variables=["messages"],
-    template=careerSummary_prompt
+    template=careerTitle_prompt
 )
 
-# CareerSummary 체인
+# CareerTitle 체인
 careerSummary_chain = cs_prompt | llm | StrOutputParser()
 
-def careerSummary_invoke(backend_data: dict, config=None) -> dict:
-    """CareerSummary Chain 실행 함수"""
+def CareerTitle_invoke(backend_data: dict, config=None) -> dict:
+    """CareerTitle Chain 실행 함수"""
     
     result = careerSummary_chain.invoke({
         "messages": backend_data
     })
     
     new_messages = []
-    new_messages.append(AIMessage(content=result, name="CareerSummary"))
+    new_messages.append(AIMessage(content=result, name="CareerTitle"))
 
     user_info = backend_data.get("user_info", {})
     profile_id = str(user_info.get('profileId', ''))
