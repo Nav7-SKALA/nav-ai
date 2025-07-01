@@ -12,7 +12,7 @@ from prompt import supervisor_prompt
 from config import MODEL_NAME, TEMPERATURE
 
 # 환경변수 로드
-# load_dotenv()
+load_dotenv()
 
 # LLM 초기화
 api_key = os.getenv("OPENAI_API_KEY")

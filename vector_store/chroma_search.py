@@ -1,4 +1,4 @@
-import chromadb
+
 import os
 import re
 from sentence_transformers import SentenceTransformer
@@ -6,19 +6,14 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-def get_chroma_client():
-    """원격 ChromaDB 클라이언트 생성 (데이터베이스 포함)"""
-    client = chromadb.HttpClient(
-        host="chromadb-1.skala25a.project.skala-ai.com",
-        port=443,
-        ssl=True,
-        headers={
-            "Authorization": "Basic YWRtaW46U2thbGEyNWEhMjMk"
-        },
-        database="nav7"  # 데이터베이스 이름 지정
-    )
-    
-    return client
+from chroma_client import get_chroma_client
+
+from dotenv import load_dotenv
+
+# 환경 변수 로드
+load_dotenv()
+
+
 
 def find_best_match(query_text: str, user_id: str):
     """쿼리에 가장 적합한 인재 찾기"""
@@ -64,27 +59,35 @@ def get_top5_info(query_text, user_id):
             if len(top5) == 5:
                 break
     
-    # 간단한 후보 정보
+    # 각 profileId별 전체 경력 정보 구성
     info = ""
     for i, profile_id in enumerate(top5, 1):
-        emp_data = collection.get(where={"profileId": profile_id}, include=['metadatas', 'documents'])
+        # 해당 profileId의 모든 경력 데이터 가져오기
+        emp_data = collection.get(where={"profileId": profile_id}, include=['metadatas'])
+        
+        if not emp_data['metadatas']:
+            continue
+            
         first_meta = emp_data['metadatas'][0]
         
         info += f"\n{i}. profileId: {profile_id}\n"
         info += f"   사번: {first_meta['사번']}\n"
         info += f"   Grade: {first_meta['grade']}\n"
         info += f"   입사년도: {first_meta['입사년도']}\n"
-        info += f"   총 경력 수: {len(emp_data['metadatas'])}개\n"
+        info += f"   경력흐름:\n"
         
-        info += "   경력 상세:\n"
-        for j, (meta, doc) in enumerate(zip(emp_data['metadatas'], emp_data['documents']), 1):
-            info += f"     경력 {j}: {meta['연차']} - {meta['역할']}\n"
-            info += f"       스킬셋: {meta['스킬셋']}\n"
-            info += f"       도메인: {meta['도메인']}\n"
-            info += f"       프로젝트규모: {meta['프로젝트규모']}\n"
-            info += f"       요약: {meta['요약']}\n"
-            info += f"       상세내용: {doc[:200]}...\n\n"
+        # 연차순으로 정렬해서 경력흐름 구성
+        careers = sorted(emp_data['metadatas'], key=lambda x: x['연차'])
+        
+        for j, career in enumerate(careers, 1):
+            info += f"     {j}. {career['연차']} - {career['역할']}\n"
+            info += f"        스킬셋: {career['스킬셋']}\n"
+            info += f"        도메인: {career['도메인']}\n"
+            info += f"        프로젝트규모: {career['프로젝트규모']}\n"
+            info += f"        요약: {career['요약']}\n"
+        
         info += "-" * 50 + "\n"
+    
     return info
 
 def llm_select(query_text, candidates):
@@ -144,3 +147,7 @@ def get_employee_detail(profile_id):
         result += f"    상세내용: {doc}\n\n"
     
     return result
+
+if __name__ == "__main__":
+    result = find_best_match("금융프로젝트 pm", user_id=1)
+    print(result)
