@@ -13,8 +13,6 @@ from dotenv import load_dotenv
 # 환경 변수 로드
 load_dotenv()
 
-
-
 def find_best_match(query_text: str, user_id: str):
     """쿼리에 가장 적합한 인재 찾기"""
     
@@ -26,24 +24,7 @@ def find_best_match(query_text: str, user_id: str):
     
     # 3. 선택된 사번으로 상세 정보 반환
     # emp_id = re.search(r'EMP-\d+', llm_choice).group(0)
-    return get_multiple_employees_detail(emp_ids) #get_employee_detail(emp_id)
-
-    # 1. 상위 5명 정보 가져오기
-    candidates = get_top5_info(query_text, user_id)
-    print("후보자들:")
-    print(candidates)
-    
-    # 2. LLM으로 1명 선택
-    llm_choice = llm_select(query_text, candidates)
-    print("LLM 선택:")
-    print(llm_choice)
-    
-    # 3. 선택된 profileId로 상세 정보 반환
-    profile_id = re.search(r'profileId\d+', llm_choice)
-    if profile_id:
-        return get_employee_detail(profile_id.group(0))
-    else:
-        return "선택된 인재를 찾을 수 없습니다."
+    return get_multiple_employees_detail(emp_ids)
 
 
 def get_topN_info(query_text, user_id, top_n):
@@ -52,8 +33,6 @@ def get_topN_info(query_text, user_id, top_n):
     collection_name = os.getenv("JSON_HISTORY_COLLECTION_NAME")
     collection = client.get_collection(name=collection_name)
 
-    # model_path="c:/Users/Administrator/Desktop/김현준/최종프로젝트/nav-ai/model/ko-sroberta-multitask"
-    # embedding_model = SentenceTransformer(model_path)
     embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"))
     query_embedding = embedding_model.encode([query_text]).tolist()
     
@@ -70,23 +49,12 @@ def get_topN_info(query_text, user_id, top_n):
             topN.append(emp_id)
             if len(topN) == top_n:
 
-        profile_id = meta.get('profileId')  # profileId 가져오기
-        if profile_id and profile_id not in seen and profile_id != user_id:
-            seen.add(profile_id)
-            top5.append(profile_id)
-            if len(top5) == 5:
-
                 break
     
     # 각 profileId별 전체 경력 정보 구성
     info = ""
 
-    for i, emp_id in enumerate(topN, 1):
-        emp_data = collection.get(where={"사번": emp_id}, include=['metadatas'])
-        meta = emp_data['metadatas'][0]
-        info += f"{i}. {meta['사번']} - {meta['grade']} - {len(emp_data['metadatas'])}개 경력\n"
-
-    for i, profile_id in enumerate(top5, 1):
+    for i, profile_id in enumerate(topN, 1):
         # 해당 profileId의 모든 경력 데이터 가져오기
         emp_data = collection.get(where={"profileId": profile_id}, include=['metadatas'])
         
@@ -101,7 +69,7 @@ def get_topN_info(query_text, user_id, top_n):
         info += f"   입사년도: {first_meta['입사년도']}\n"
         info += f"   경력흐름:\n"
         
-        # 연차순으로 정렬해서 경력흐름 구성
+        # 연차순으로 정렬해서 경력 흐름 구성
         careers = sorted(emp_data['metadatas'], key=lambda x: x['연차'])
         
         for j, career in enumerate(careers, 1):
