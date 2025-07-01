@@ -5,8 +5,8 @@ pipeline {
         GIT_URL = 'https://github.com/Nav7-SKALA/nav-ai.git'
         GIT_BRANCH = 'main'
         GIT_ID = 'skala-github-id'
-        GIT_USER_NAME = 'ilikewhale'           // 이거 추가
-        GIT_USER_EMAIL = 'rla0576@naver.com'   // 이거 추가
+        GIT_USER_NAME = 'Emt1127'           // 이거 추가
+        GIT_USER_EMAIL = 'guswns694@github.com'   // 이거 추가
         IMAGE_REGISTRY = 'amdp-registry.skala-ai.com/skala25a'
         IMAGE_NAME = 'sk-nav7-ai'
         IMAGE_TAG = '1.0.0'
@@ -34,7 +34,8 @@ pipeline {
                         def FINAL_IMAGE_TAG = "${IMAGE_TAG}-${BUILD_NUMBER}-${hashcode}"
                         echo "Final Image Tag: ${FINAL_IMAGE_TAG}"
                         docker.withRegistry("https://${IMAGE_REGISTRY}", "${DOCKER_CREDENTIAL_ID}") {
-                            def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${FINAL_IMAGE_TAG}", "--platform linux/amd64 .")
+                            // def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${FINAL_IMAGE_TAG}", "--platform linux/amd64 .")
+                            def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${FINAL_IMAGE_TAG}", "--no-cache --platform linux/amd64 .")
                             appImage.push()
                         }
                         // 최종 이미지 태그를 env에 등록 (나중에 deploy.yaml 수정에 사용)

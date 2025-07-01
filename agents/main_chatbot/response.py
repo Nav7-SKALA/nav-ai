@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 
 class PromptWrite(BaseModel):
     """re-write prompt"""
@@ -10,11 +10,21 @@ class PromptWrite(BaseModel):
         description="그렇게 수정하게 된 이유 설명"
     )
 
+class SimilarRoadMapResult(BaseModel):
+    similar_analysis_text: str = Field(
+        default=None,
+        description="유사 구성원의 경력 증진 로드맵 제시 전 설명 텍스트"
+    )
+    similar_analysis_roadmap: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = Field(
+        default=None,
+        description="유사 구성원의 경력 증진 로드맵"
+    )
+
 class PathRecommendResult(BaseModel):
     career_path_text: str = Field(
         description="커리어 증진 경로 추천 텍스트 자료"
     )
-    career_path_roadmap: Optional[Dict[str, Any]] = Field(
+    career_path_roadmap: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = Field( #Optional[Dict[str, Any]]
         default=None,
         description="커리어 증진 경로 추천 로드맵"
     )
@@ -26,7 +36,7 @@ class RoleModelProfile(BaseModel):
     current_position: str = Field(description="현재 직무/포지션")
     experience_years: str = Field(description="경력 년차")
     main_domains: List[str] = Field(description="주요 도메인 리스트")
-    tech_stack: List[str] = Field(description="핵심 기술스택 리스트")
+    skill_set: List[str] = Field(description="핵심 기술 스택 리스트")
     career_highlights: List[str] = Field(description="주요 경력 하이라이트")
     advice_message: str = Field(description="사용자에게 주는 조언 메시지")
 
@@ -35,10 +45,13 @@ class RoleModelGroup(BaseModel):
     group_name: str = Field(description="그룹명 (예: 백엔드 전문가, 풀스택 개발자)")
     group_description: str = Field(description="그룹의 특징과 공통점 설명")
     member_count: int = Field(description="그룹에 속한 사원 수")
-    common_tech_stack: List[str] = Field(description="공통 기술 스택")
+    common_skill_set: List[str] = Field(description="공통 기술 스택")
     common_career_path: List[str] = Field(description="공통 커리어 패턴")
     role_model: RoleModelProfile = Field(description="그룹 대표 롤모델")
     real_info: List[str] = Field(description="그룹에 속한 사원의 chromaDB ID")
+    common_project : List[str] = Field(description="그룹에 속한 사원들의 주요 수행 프로젝트")
+    common_experience : List[str] = Field(description="그룹에 속한 사원들의 프로젝트 외 경력 관련 경험(예: 컨퍼런스 참여) 정보")
+    common_cert : List[str] = Field(description="그룹에 속한 사원들의 경력 관련 자격증 정보")
 
 class GroupedRoleModelResult(BaseModel):
     """그룹화된 롤모델 결과"""

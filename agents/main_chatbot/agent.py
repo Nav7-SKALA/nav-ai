@@ -1,13 +1,16 @@
-from agents.main_chatbot.prompt import exception_prompt, intent_prompt,rewrite_prompt, rag_prompt, path_prompt,role_prompt, keyword_prompt,chat_summary_prompt, trend_prompt
+from agents.main_chatbot.prompt import exception_prompt, intent_prompt, rewrite_prompt, rag_prompt, \
+                                        role_prompt, keyword_prompt, chat_summary_prompt, trend_prompt
+from agents.main_chatbot.prompt import similar_analysis_prompt, career_recommend_prompt, \
+                                       tech_extraction_prompt, future_search_prompt, future_job_prompt
 from agents.main_chatbot.developstate import DevelopState
 from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE, role, skill_set, domain, job
-from agents.main_chatbot.response import PromptWrite, PathRecommendResult, GroupedRoleModelResult
+from agents.main_chatbot.response import PromptWrite, PathRecommendResult, GroupedRoleModelResult, SimilarRoadMapResult
 from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
-from vector_store.chroma_search import find_best_match,get_top5_info
-from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords
+from vector_store.chroma_search import find_best_match, get_topN_info, get_topN_emp
+from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords, format_search_results
 import json
 
 
@@ -31,7 +34,7 @@ def exception(state: DevelopState) -> DevelopState:
 
 def intent_analize(state: DevelopState) -> DevelopState:
     input_query = state['input_query']
-    agents=["path_recommend", "role_model", "trend_path", "EXCEPTION"]
+    agents=["path_recommend", "role_model", "trend_path", "career_goal", "EXCEPTION"]
     prompt = intent_prompt.format(agents=agents)
     messages = [AIMessage(content=prompt), HumanMessage(input_query)]
     llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
@@ -57,7 +60,7 @@ def rewrite(state: DevelopState) -> DevelopState:
                     "result": {'detail': '사용자 ID가 없습니다.'}}
             
         rewriter_prompt = PromptTemplate(
-            input_variables=["career_summary","chat_summary", "user_query", "role", "skill_set", "domain","intent"],
+            input_variables=["career_summary", "chat_summary", "user_query", "role", "skill_set", "domain", "intent"],
             template=rewrite_prompt
             )
         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
@@ -81,27 +84,26 @@ def ragwrite(state: DevelopState) -> DevelopState:
     """RAG 과정에서 사용할 질의 재생성 노드 (chromaDB version)"""
     query = state.get('rewrited_query', '')
     intent = state.get('intent', '')
-    prompt=[HumanMessage(content=rag_prompt.format(query=query,intent=intent))]
+    prompt=[HumanMessage(content=rag_prompt.format(query=query, intent=intent))]
     llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
     response = llm.invoke(prompt)
     return {**state, 
             'rag_query': response.content.strip()  
             }
 
-def path(state: DevelopState) -> DevelopState:
-    """ 
-    추출된 사내 구성원 데이터 정보를 기반으로 분석(공통점/경력 변화 등)하는 노드
-    현재: 명시적으로 내부에서 노드 순차적 실행하게 만들어 둠
+def similar_roadmap(state:DevelopState) -> DevelopState:
     """
-    try:
-        info = find_best_match(state.get('rag_query',''),state.get('user_id',''))
-        path_recommend_prompt = PromptTemplate(
-        input_variables=["internal_employee", "career_summary", "user_query", "role", "job", "skill_set"],
-        template=path_prompt
+    추출된 사내 구성원 데이터 정보를 바탕으로 공통점 분석하여 로드맵 작성하는 노드
+    """
+    try: 
+        info = find_best_match(state.get('rag_query', ''), state.get('user_id', ''))
+        similar_roadmap_prompt = PromptTemplate(
+            input_variables=["internal_employee", "career_summary", "user_query", "role", "job", "skill_set"],
+            template=similar_analysis_prompt
         )
         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
-        path_chain = path_recommend_prompt | llm.with_structured_output(PathRecommendResult)
-        result = path_chain.invoke({
+        similar_chain = similar_roadmap_prompt | llm.with_structured_output(SimilarRoadMapResult)
+        result = similar_chain.invoke({
             "internal_employee": info,
             "career_summary": state.get("career_summary", ""),
             "user_query": state.get("rewrited_query", ""),
@@ -109,7 +111,41 @@ def path(state: DevelopState) -> DevelopState:
         })
         return {
             **state,
-            'result': {'text': result.career_path_text,
+            'result': {'similar_text': result.similar_analysis_text,
+                       'similar_roadmaps': result.similar_analysis_roadmap},
+            'messages': [AIMessage(result.similar_analysis_text),
+                         AIMessage(json.dumps(result.similar_analysis_roadmap, ensure_ascii=False))]
+        }
+    except Exception as e:
+        return {**state,
+                'result': {'text': "invoke"+str(e),
+                           'similar_roadmap': None},
+                'error': f"유사한 사내 구성원 데이터 기반 로드맵 작성 중 오류: {str(e)}"
+                }
+
+def path(state: DevelopState) -> DevelopState:
+    """ 
+    추출된 사내 구성원 데이터 정보를 기반으로 경력 증진 경로 추천하는 노드
+    현재: 명시적으로 내부에서 노드 순차적 실행하게 만들어 둠
+    """
+    try:
+        # info = find_best_match(state.get('rag_query',''),state.get('user_id',''))
+        path_recommend_prompt = PromptTemplate(
+        input_variables=["internal_employee", "career_summary", "user_query", "role", "job", "skill_set"],
+        template=career_recommend_prompt
+        )
+        llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+        path_chain = path_recommend_prompt | llm.with_structured_output(PathRecommendResult)
+        result = path_chain.invoke({
+            "career_summary": state.get("career_summary", ""),
+            "user_query": state.get("rewrited_query", ""),
+            "common_patterns": state.get("result", {}).get("similar_roadmaps", ""),
+            "role": role, "skill_set": skill_set, "job": job
+        })
+        return {
+            **state,
+            'result': {**state.get("result", {}),
+                        'text': result.career_path_text,
                         'roadmaps': result.career_path_roadmap
                         },
             'messages': [AIMessage(result.career_path_text),
@@ -129,9 +165,10 @@ def role_model(state: DevelopState) -> DevelopState:
     현재: 명시적으로 내부에서 노드 순차적 실행하게 만들어 둠
     """
     try:
-        info = get_top5_info(state.get('rag_query',''),state.get('user_id',''))
+        top_n = 5
+        info = get_topN_emp(state.get('rag_query',''), state.get('user_id',''), top_n)
         grouping_prompt = PromptTemplate(
-            input_variables=["similar_employees", "user_query", "total_count", "skill_set", "role", "domain"],
+            input_variables=["similar_employees", "user_query", "total_count", "skill_set", "job", "role", "domain"],
             template=role_prompt
             )
         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
@@ -139,38 +176,56 @@ def role_model(state: DevelopState) -> DevelopState:
         structured_result = rolemodel_chain.invoke({
             "similar_employees": info,
             "user_query": state.get('input_query'),
-            "total_count": 5,
+            "total_count": top_n,
             "skill_set": skill_set,
             "role": role,
-            "domain": domain
+            "domain": domain,
+            "job": job
         })
+        
         role_model_list = []
-        for i, group in enumerate(structured_result.groups, 1):
+        for i, group in enumerate(structured_result.groups):
             role_model_dict = {
-                'group_id': f'group_{i}',
+                'group_id': f'group_{i+1}',
                 'group_name': group.group_name,
                 # 'group_description': group.group_description,
-                # 'member_count': group.member_count,
-                # 'role_model_name': group.role_model.name,
                 'current_position': group.role_model.current_position,
                 'experience_years': group.role_model.experience_years,
                 'main_domains': group.role_model.main_domains,
-                'tech_stack': group.role_model.tech_stack,
-                # 'career_highlights': group.role_model.career_highlights,
+                # 'skill_set': group.role_model.skill_set,
                 'advice_message': group.role_model.advice_message,
-                'common_tech_stack': group.common_tech_stack,
-                'common_career_path': group.common_career_path
+                'common_skill_set': group.common_skill_set,
+                'common_career_path': group.common_career_path,
+                'common_project': group.common_project,
+                'common_experience': group.common_experience,
+                'common_cert': group.common_cert
             }
             role_model_list.append(role_model_dict)
-            # 요약 정보 생성
-        summary_text = f"""
-        🎯 분석 완료: {structured_result.total_employees}명의 사원 데이터를 {len(structured_result.groups)}개 그룹으로 분류
+        
+        print(role_model_list)
+        # 요약 정보 생성
+        summary_text = f"""🎯 분석 완료: {structured_result.total_employees}명의 사원 데이터를 {len(structured_result.groups)}개 그룹으로 분류
 
-        📋 생성된 롤모델 그룹:
-        {chr(10).join([f"• {group.group_name}: {group.role_model.name} ({group.member_count}명)" for group in structured_result.groups])}
+📋 생성된 롤모델 그룹:
+{chr(10).join([f"• {group.group_name}: {group.role_model.name} ({group.member_count}명)" for group in structured_result.groups])}
 
-        💡 {structured_result.analysis_summary}
-        """
+💡 {structured_result.analysis_summary}
+
+📊 상세 롤모델 정보:
+{chr(10).join([
+    f"▶ {model['group_name']} (ID: {model['group_id']})" + chr(10) +
+    f"  • 현재 직책: {model['current_position']}" + chr(10) +
+    f"  • 경력: {model['experience_years']}" + chr(10) +
+    f"  • 주요 도메인: {', '.join(model['main_domains'])}" + chr(10) +
+    f"  • 조언: {model['advice_message']}" + chr(10) +
+    f"  • 공통 기술 스택: {', '.join(model['common_skill_set'])}" + chr(10) +
+    f"  • 공통 경력 증진 패턴: {', '.join(model['common_career_path'])}" + chr(10) +
+    f"  • 공통 프로젝트: {', '.join(model['common_project'])}" + chr(10) +
+    f"  • 공통 경험: {', '.join(model['common_experience'])}" + chr(10) +
+    f"  • 공통 자격증: {', '.join(model['common_cert'])}" + chr(10)
+    for model in role_model_list
+])}
+"""
         
         return {
             **state,
@@ -184,28 +239,119 @@ def role_model(state: DevelopState) -> DevelopState:
     
 async def trend(state: DevelopState) -> DevelopState:
     llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
-    keyword_prompttamplate = PromptTemplate(
-    input_variables=["messages"],
-    template=keyword_prompt
-    )
+
+    # 키워드 추출
+    keyword_prompttamplate = PromptTemplate(input_variables=["messages"],
+                                            template=keyword_prompt
+                                            )
     keyword_llm_chain = keyword_prompttamplate | llm
-    keywords = parse_keywords((keyword_llm_chain.invoke({
-        "messages": state.get('input_query')
-    })).content)
+    keywords = parse_keywords(
+                (keyword_llm_chain.invoke({"messages": state.get('input_query')})).content
+                )
     trend_keyword = await trend_analysis_for_keywords(keywords)
-    trend_prompttamplate = PromptTemplate(
-    input_variables=["messages", "keyword_result"],
-    template=trend_prompt
-    )
+
+    # 기술 검색 결과 분석
+    trend_prompttamplate = PromptTemplate(input_variables=["messages", "keyword_result"],
+                                          template=trend_prompt
+                                          )
     trend_llm_chain = trend_prompttamplate | llm
     result = trend_llm_chain.invoke({
-        "messages": state.get('input_query'),
-        "keyword_result": trend_keyword,
-    })
+                    "messages": state.get('input_query'),
+                    "keyword_result": trend_keyword,
+                })
+    
     return {**state,
-        'result': {'text': result.content},
-        'messages': AIMessage(result.content)}
+            'result': {'text': result.content},
+            'messages': AIMessage(result.content)}
 
+
+async def future_career_recommend(state: DevelopState) -> DevelopState:
+    """
+    경력 요약 기반 미래 직무 추천 노드 (async 버전)
+    1. 경력 요약에서 기술 스택 파악
+    2. 다중 소스 검색으로 최신 기술 트렌드 수집
+    3. 15년 후 직무 추천
+    """
+    try:
+        career_summary = state.get('career_summary', '')
+        user_query = state.get('input_query', '')
+        
+        if not career_summary or career_summary == "None":
+            return {
+                **state,
+                'result': {
+                    'text': '경력 정보가 없어서 미래 직무를 추천할 수 없습니다. 경력 정보를 먼저 등록해주세요.'
+                },
+                'messages': AIMessage('경력 정보가 없어서 미래 직무를 추천할 수 없습니다.')
+            }
+        
+        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
+        
+        # 1단계: 경력 요약에서 기술 스택 추출
+        tech_extraction_template = PromptTemplate(
+            input_variables=["career_summary", "user_query"],
+            template=tech_extraction_prompt
+        )
+        
+        tech_extraction_chain = tech_extraction_template | llm
+        
+        tech_analysis_result = tech_extraction_chain.invoke({
+            "career_summary": career_summary,
+            "user_query": user_query
+        })
+
+        # 2단계: 키워드 추출
+        keyword_template = PromptTemplate(
+            input_variables=["analysis_result"],
+            template=future_search_prompt
+        )
+        
+        keyword_chain = keyword_template | llm
+        
+        keywords_result = keyword_chain.invoke({
+            "analysis_result": tech_analysis_result.content
+        })
+
+        # 3단계: 키워드 기반 최신 내용 검색
+        # 키워드를 리스트로 변환
+        extracted_keywords = [kw.strip() for kw in keywords_result.content.split(',')]
+        
+        # 3단계: 다중 소스 병렬 검색 (GitHub, Reddit, Tavily)
+        search_results = await trend_analysis_for_keywords(extracted_keywords)
+        
+        # 검색 결과를 텍스트로 포맷팅
+        formatted_search_results = format_search_results(search_results)
+
+        # 4단계: 15년 후 미래 직무 추천
+        future_job_template = PromptTemplate(
+            input_variables=["career_summary", "tech_analysis", "search_tech_trends"],
+            template=future_job_prompt
+        )
+        
+        future_job_chain = future_job_template | llm
+        
+        final_result = future_job_chain.invoke({
+            "career_summary": career_summary,
+            "tech_analysis": tech_analysis_result.content,
+            "search_tech_trends": formatted_search_results
+        })
+
+        return {
+            **state,
+            'result': {
+                'text': final_result.content,
+            },
+            'messages': AIMessage(final_result.content)
+        }
+        
+    except Exception as e:
+        return {
+            **state,
+            'result': {
+                'text': f'미래 직무 추천 중 오류 발생: {str(e)}'
+            },
+            'error': f'미래 직무 추천 중 오류 발생: {str(e)}'
+        }
 
 def chat_summary(state: DevelopState) -> DevelopState:
     llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)

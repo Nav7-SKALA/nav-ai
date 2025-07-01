@@ -12,6 +12,10 @@ class AgentState(TypedDict):
     next: str
     input_query: str
 
+def merge_dicts(left: Dict, right: Dict) -> Dict:
+    """두 딕셔너리를 병합하는 함수"""
+    return {**left, **right}
+
 class DevelopState(TypedDict):
     user_id: str
     chat_summary: str
@@ -20,5 +24,5 @@ class DevelopState(TypedDict):
     intent: str
     rewrited_query: str
     rag_query: str
-    result: Dict[str, Any]
+    result: Annotated[Dict[str, Any], merge_dicts] #Dict[str, Any]
     messages: Annotated[List, add_messages]
