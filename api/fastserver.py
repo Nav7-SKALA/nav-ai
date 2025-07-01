@@ -30,6 +30,7 @@ import uvicorn
 from main_chatbot.graph import create_workflow, create_response
 from upsert_profile_vector import add_profile_to_vectordb
 from career_summary_agent import careerSummary_invoke
+from career_title_agent import CareerTitle_invoke
 
 app = FastAPI(
     docs_url="/apis/docs",
@@ -318,8 +319,22 @@ async def process_profile(request: ProfileRequest):
    return {
        "status": "success",
        "profile_id": summary_result["profile_id"],
-       "career_summary": summary_result["messages"][0].content,
+       "career_summary": summary_result["career_summary"],
        "vector_saved": vector_result
+   }
+@app.post("/apis/v1/career-title")
+def career_title(request: ProfileRequest):
+    "Career Title 생성"
+    backend_data = request.dict()
+
+    # Career Title 생성
+    title_result = CareerTitle_invoke(backend_data)
+
+    # 결과 반환
+    return {
+       "status": "success",
+       "profile_id": title_result["profile_id"],
+       "career_title": title_result["career_title"],
    }
 
 if __name__ == "__main__":

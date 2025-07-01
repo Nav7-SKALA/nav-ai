@@ -22,29 +22,31 @@ llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
 
 
 # CareerTitle 프롬프트
-cs_prompt = PromptTemplate(
+ct_prompt = PromptTemplate(
     input_variables=["messages"],
     template=careerTitle_prompt
 )
 
 # CareerTitle 체인
-careerSummary_chain = cs_prompt | llm | StrOutputParser()
+careerTitle_chain = ct_prompt | llm | StrOutputParser()
 
-def CareerTitle_invoke(backend_data: dict, config=None) -> dict:
+def CareerTitle_invoke(backend_data: dict) -> dict:
     """CareerTitle Chain 실행 함수"""
-    
-    result = careerSummary_chain.invoke({
-        "messages": backend_data
-    })
-    
-    new_messages = []
-    new_messages.append(AIMessage(content=result, name="CareerTitle"))
-
-    user_info = backend_data.get("user_info", {})
-    profile_id = str(user_info.get('profileId', ''))
-    
-    return {
-        "profile_id": profile_id,
-        "messages": new_messages
-    }
+    try:
+        result = careerTitle_chain.invoke({
+            "messages": backend_data
+        })
+        
+        user_info = backend_data.get("user_info", {})
+        profile_id = user_info.get('profileId', '')
+        
+        return {
+            "profile_id": profile_id,
+            "career_title": result
+        }
+    except Exception as e:
+        return {
+            "profile_id": "",
+            "career_title": f"오류 발생: {str(e)}"
+        }
 

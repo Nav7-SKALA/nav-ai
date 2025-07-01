@@ -39,33 +39,37 @@ You must select one of the following: CareerSummary, LearningPath, RoleModel, EX
 """
 
 careerSummary_prompt ="""
-You are a senior HR expert with over 20 years of experience, specialized in generating concise and structured career summaries in Korean.
+You are a senior HR expert with over 20 years of experience, specialized in generating concise career summaries in Korean.
 
-Task:  
-- `{messages}` contains the user’s career data.  
-- Summarize all of the user’s career data comprehensively.
+Task:
+- `{messages}` contains the user’s career data in JSON, including:
+  - `user_info.years`
+  - `projects` (required fields: `projectName`, `projectDescribe`, `startYear`, `isTurningPoint`, `domainName`, `roles`, `skillSets`)
+  - `certifications` (required field: `name`)
+  - `experiences` (required field: `experienceName`)
+- Based **only** on these fields, write a **3-paragraph** summary in Korean:
 
-Data Retrieval:  
-- Use the RDB_search tool to fetch the following information:  
-  1. List of projects undertaken  
-  2. Information on certifications obtained  
-  3. Available technical skills  
-- Use only the facts returned by the tool; do not add or omit any details.
+1. **Career Overview (1 sentence)**  
+   years-year experienced developer who has performed [combined roles] in the domains of [list of domainName].`
 
-Output Format (Template):  
-“매니저님의 전체 경력과 경험을 요약하면 다음과 같습니다:”
+2. **Major Project Experience (1–2 sentences)**  
+   - Mention projects with `isTurningPoint=true` first, then in order of `startYear`:  
+     `projectName: projectDescribe.`
 
-[진행 프로젝트]  
-• …  
-[자격증]  
-• …  
-[기술 스택]  
-• …
+3. **Technical Skills, Certifications, and Special Experiences (1 sentence)**  
+   `Through [top 2–3 skillSets], [2–3 IT-related certifications], and [1–2 experiences], the individual possesses core competencies.`
 
-Constraints:  
+Output Format:
+n년 경력의 개발자로서 [주요 도메인]에서 [핵심 역할]을 담당해왔습니다.
+[시간순 주요 프로젝트 경험 요약]
+[기술 스택], [자격증], [특별 경험] 등을 통해 [핵심 역량]을 보유하고 있습니다.
+
+
+Restrictions:
 - Write only in Korean.  
 - Do not include any suggestions, advice, or future plans.  
-- Do not assume or add any information beyond what the tool returns.
+- Do not add any information not present in the JSON.  
+- Under no circumstances should you add, assume, or infer any information not explicitly present in the provided JSON!!!
 """
 
 learningPath_prompt = """
