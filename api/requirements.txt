@@ -37,11 +37,11 @@ langsmith==0.1.108
 # ipykernel==6.29.5
 #hj
 praw==7.7.1
+# sentence-transformers 라이브러리
+sentence-transformers==2.6.1
 # PyTorch CPU 전용 설치
 torch
 torchvision
 torchaudio
-# sentence-transformers 라이브러리
-sentence-transformers==2.6.1
 pymongo==4.13.2
 psycopg2-binary==2.9.10
