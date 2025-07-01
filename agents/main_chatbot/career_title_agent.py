@@ -15,7 +15,6 @@ api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY 환경변수를 설정해주세요.")
 
-os.environ["OPENAI_API_KEY"] = api_key
 MODEL_NAME = os.getenv("MODEL_NAME")
 TEMPERATURE = os.getenv("TEMPERATURE")
 llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
