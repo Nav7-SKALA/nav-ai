@@ -22,3 +22,4 @@ def get_career_summary(member_id: str):
     if result is None:
         return "None"
     return result[0]
+

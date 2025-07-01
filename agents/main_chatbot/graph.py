@@ -6,13 +6,12 @@ import operator
 # 필요한 모듈들 임포트
 from supervisor_agent import supervisor_agent
 from role_model_agent import roleModel_node
-from career_summary_agent import careerSummary_node
 from learning_path_agent import learningPath_node
 from exception_agent import exception_node
 
 
 # 멤버 및 옵션 정의
-members = ["CareerSummary", "LearningPath", "RoleModel", "EXCEPTION"]
+members = ["LearningPath", "RoleModel", "EXCEPTION"]
 options = ["FINISH"] + members
 
 
@@ -42,7 +41,6 @@ def create_workflow():
     workflow = StateGraph(AgentState)
         
     workflow.add_node("supervisor", supervisor_agent)
-    workflow.add_node("CareerSummary", careerSummary_node)
     workflow.add_node("LearningPath", learningPath_node)
     workflow.add_node("RoleModel", roleModel_node)
     workflow.add_node("EXCEPTION", exception_node)
@@ -123,7 +121,7 @@ def run_main_chatbot(user_query: str):
 
 if __name__ == "__main__":
 
-    user_query = "AI 개발자가 되고 싶은데 어떻게 공부해야 할까요?"
+    user_query = "내 커리어 요약해줘"
     
     result = run_main_chatbot(user_query)
 

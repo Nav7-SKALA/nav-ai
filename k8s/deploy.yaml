@@ -20,7 +20,7 @@ spec:
         - name: nav7-ai
 
 
-          image: amdp-registry.skala-ai.com/skala25a/sk-nav7-ai:1.0.0-1-de4d915fe38a
+          image: amdp-registry.skala-ai.com/skala25a/sk-nav7-ai:1.0.0-13-cc236a56e2f2
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -35,6 +35,61 @@ spec:
                 secretKeyRef:
                   name: nav-ai-secret
                   key: TAVILY_API_KEY
+            - name: REDDIT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: REDDIT_ID
+            - name: REDDIT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: REDDIT_SECRET
+            - name: EMBEDDING_MODEL_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: EMBEDDING_MODEL_NAME
+            - name: JSON_HISTORY_COLLECTION_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: JSON_HISTORY_COLLECTION_NAME
+            - name: MODEL_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: MODEL_NAME
+            - name: TEMPERATURE
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: TEMPERATURE
+            - name: MONGO_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: MONGO_URL
+            - name: MONGO_DB
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: MONGO_DB
+            - name: MONGO_COLLECTION
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: MONGO_COLLECTION
+            - name: POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: POSTGRES_URL
+            - name: REDDIT_AGENT
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: REDDIT_AGENT
             - name: IMAGE_REGISTRY
               value: "amdp-registry.skala-ai.com/skala25a"
             - name: IMAGE_NAME

@@ -1,7 +1,19 @@
 import sys
+import os
+# 현재 디렉토리 추가
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
+
+from config import BASE_DIR, AGENT_ROOT, AGENT_DIR, VECTOR_STORE_ROOT
+
+
+sys.path.append(BASE_DIR)
+sys.path.append(AGENT_ROOT)
+sys.path.append(AGENT_DIR["main_chatbot"])
+sys.path.append(VECTOR_STORE_ROOT)
+
+# 경로 설정 후 import
 from typing import Any, Optional, List, Union
-# from dotenv import load_dotenv
-# load_dotenv("api/.env")
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
@@ -15,13 +27,10 @@ from openai import (
     APIConnectionError,
 )
 import uvicorn
-# 프로젝트 경로 설정
-from api.config import BASE_DIR, AGENT_ROOT, AGENT_DIR
-
-sys.path.append(BASE_DIR)
-sys.path.append(AGENT_ROOT)
-sys.path.append(AGENT_DIR["main_chatbot"])
 from main_chatbot.graph import create_workflow, create_response
+from upsert_profile_vector import add_profile_to_vectordb
+from career_summary_agent import careerSummary_invoke
+from career_title_agent import CareerTitle_invoke
 
 app = FastAPI(
     docs_url="/apis/docs",
@@ -101,6 +110,39 @@ class CareerPathRequest(BaseModel):
     session_id: str = Field(..., example="73b1065c-5850-4602-b935-f45f94f961af")
     user_id: str = Field(..., example="EMP-100014")
 
+
+class ProfileRequest(BaseModel):
+    """
+    /apis/v1/career-summary 요청 바디 스키마
+    """
+    user_id: str = Field(..., example="1")
+    user_info: dict = Field(..., example={
+        "profileId": 1,
+        "years": 2
+    })
+    projects: list = Field(..., example=[
+        {
+            "projectId": 1,
+            "projectName": "물류 시스템 리뉴얼",
+            "projectDescribe": "기존 WMS 시스템 개선 프로젝트",
+            "startYear": 1,
+            "endYear": 2,
+            "projectSize": "대형",
+            "skillSets": ["Python", "Django"],
+            "roles": ["백엔드 개발자"]
+        }
+    ])
+    certifications: list = Field(..., example=[
+        {"name": "정보처리기사", "acquisitionDate": "2023-02"},
+        {"name": "AWS SAA", "acquisitionDate": "2023-09"}
+    ])
+    experiences: list = Field(..., example=[
+        {
+            "experienceName": "Spring Boot 교육 수료",
+            "experienceDescribe": "5주간 백엔드 교육 과정",
+            "experiencedAt": "2022-06"
+        }
+    ])
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 2) 전역 예외 핸들러 등록
@@ -263,8 +305,37 @@ def rolemodel():
     return "rolemodel: cloud 마스터"
 
 @app.post("/apis/v1/career-summary")
-def career_summary():
-    return "career-summary: 당신은 cloud 최고 전문가 김채연매니저입니다>_<"
+async def process_profile(request: ProfileRequest):
+   """백엔드 데이터 받아서 VectorDB 저장 + Career Summary 생성"""
+   backend_data = request.dict()
+   
+   # 1. VectorDB에 저장
+   vector_result = add_profile_to_vectordb(backend_data)
+   
+   # 2. Career Summary 생성
+   summary_result = careerSummary_invoke(backend_data)
+   
+   # 3. 결과 반환
+   return {
+       "status": "success",
+       "profile_id": summary_result["profile_id"],
+       "career_summary": summary_result["career_summary"],
+       "vector_saved": vector_result
+   }
+@app.post("/apis/v1/career-title")
+def career_title(request: ProfileRequest):
+    "Career Title 생성"
+    backend_data = request.dict()
+
+    # Career Title 생성
+    title_result = CareerTitle_invoke(backend_data)
+
+    # 결과 반환
+    return {
+       "status": "success",
+       "profile_id": title_result["profile_id"],
+       "career_title": title_result["career_title"],
+   }
 
 if __name__ == "__main__":
     import argparse
