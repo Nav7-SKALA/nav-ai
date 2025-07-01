@@ -21,10 +21,6 @@ class SimilarRoadMapResult(BaseModel):
     )
 
 class PathRecommendResult(BaseModel):
-    # similar_analysis_roadmap: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = Field(
-    #     default=None,
-    #     description="유사 구성원의 경력 증진 로드맵"
-    # )
     career_path_text: str = Field(
         description="커리어 증진 경로 추천 텍스트 자료"
     )

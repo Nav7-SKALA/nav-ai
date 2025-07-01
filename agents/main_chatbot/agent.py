@@ -182,7 +182,6 @@ def role_model(state: DevelopState) -> DevelopState:
             "domain": domain,
             "job": job
         })
-        # print(structured_result)
         
         role_model_list = []
         for i, group in enumerate(structured_result.groups):
