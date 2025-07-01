@@ -9,6 +9,7 @@ langgraph==0.2.14
 feedparser ==6.0.11
 langchain-core==0.2.37
 langchain-openai==0.1.23
+tavily-python==0.7.3
 # pandas==2.2.2
 # chroma-hnswlib==0.7.3
 # python-dotenv==1.0.1
@@ -34,7 +35,6 @@ langchain-openai==0.1.23
 # kiwipiepy==0.17.1
 # redis==5.0.8
 # ipykernel==6.29.5
-# tavily-python==0.7.3
 #hj
 praw==7.7.1
 # PyTorch CPU 전용 설치
