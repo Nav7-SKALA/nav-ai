@@ -11,6 +11,8 @@ model/
 # env
 .vscode/
 .env
+# github
+.github/
 
 
 # Python bytecode / cache
@@ -18,3 +20,6 @@ __pycache__/
 *.py[cod]
 
 .DS_Store
+
+# test
+test/

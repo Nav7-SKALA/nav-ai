@@ -1,7 +1,8 @@
 from langgraph.graph import StateGraph, END, START
 from agents.main_chatbot.developstate import DevelopState
 from typing import Literal, Dict, Any
-from agents.main_chatbot.agent import intent_analize, rewrite, exception, path, role_model,trend, chat_summary, ragwrite
+from agents.main_chatbot.agent import intent_analize, rewrite, exception, path, role_model, trend, chat_summary, ragwrite
+from agents.main_chatbot.agent import similar_roadmap, future_career_recommend
 from db.mongo import get_session_data
 from db.postgres import get_career_summary
 ## Router
@@ -14,7 +15,7 @@ def route_from_intent(state: DevelopState) -> Literal["rewriter_node", "EXCEPTIO
         return "rewriter_node"
 
 # 2차 분기: 정상 에이전트 분기
-def route_to_agent(state: DevelopState) -> Literal["path_recommend", "role_model", "trend_path"]:
+def route_to_agent(state: DevelopState) -> Literal["path_recommend", "role_model", "trend_path", "career_goal"]:
     intent = state['intent']
     if "path_recommend" in intent:
         return "path_recommend" 
@@ -22,6 +23,8 @@ def route_to_agent(state: DevelopState) -> Literal["path_recommend", "role_model
         return "role_model"
     elif "trend_path" in intent:
         return "trend_path"
+    elif "career_goal" in intent:
+        return "career_goal"
     else:
         return "trend_path"
     
@@ -32,8 +35,11 @@ def createworkflow():
     workflow.add_node("rewriter_node", rewrite)
     workflow.add_node("ragwriter_node", ragwrite)
     workflow.add_node("EXCEPTION", exception) 
-    workflow.add_node("path_recommend", path)
+    workflow.add_node("recommend_roadmap", path)
+    ## add
+    workflow.add_node("similar_roadmap", similar_roadmap)
     workflow.add_node("role_model", role_model)
+    workflow.add_node("future_career", future_career_recommend)
     workflow.add_node("trend_path", trend)
     workflow.add_node("chatting_summary", chat_summary)
     workflow.add_edge(START, "intent_analize")
@@ -50,14 +56,18 @@ def createworkflow():
         "ragwriter_node",
         route_to_agent,
         {
-            "path_recommend": "path_recommend", 
+            "path_recommend": "similar_roadmap",
             "role_model": "role_model", 
-            "trend_path": "trend_path"
+            "trend_path": "trend_path",
+            "career_goal": "future_career"
         }
     )
-    workflow.add_edge("path_recommend", "chatting_summary")
+    # add
+    workflow.add_edge("similar_roadmap", "recommend_roadmap")
+    workflow.add_edge("recommend_roadmap", "chatting_summary")
     workflow.add_edge("role_model", "chatting_summary")
     workflow.add_edge("trend_path", "chatting_summary")
+    workflow.add_edge("future_career", "chatting_summary")
     workflow.add_edge("EXCEPTION", "chatting_summary")  
     workflow.add_edge("chatting_summary", END)  
     graph = workflow.compile()
@@ -71,6 +81,7 @@ def create_initial_state(user_id: str, input_query: str, career_summary: str, ch
         "chat_summary":chat_summary,
         "intent": "",
         "rewrited_query": "",
+        "similar_career": {},
         "rag_query": "",
         "result": {},  
         "messages": [],

@@ -1,6 +1,7 @@
 import psycopg2
 from psycopg2 import sql
 import os
+
 def get_career_summary(member_id: str):
     if not member_id.isdigit():
         return "None"
