@@ -64,7 +64,12 @@ def get_topN_info(query_text, user_id, top_n, grade=None, years=False):
         if years:
             entry_year = get_user_entry_year(user_id)
             cutoff_year = entry_year - 3
-            where_filter["입사년도"] = {"$gte": cutoff_year}
+            where_filter = {
+                "$and": [
+                    {"입사년도": {"$gte": cutoff_year}},
+                    {"grade": {"$ne": 'CL4'}}
+                ]
+            }
 
     # 디버깅용 출력
     print(f"🔍 검색 쿼리: {query_text}")
@@ -90,7 +95,11 @@ def get_topN_info(query_text, user_id, top_n, grade=None, years=False):
     seen = set()
     topN = []
     for meta in results['metadatas'][0]:
-        emp_id = meta['사번']
+        # 사번이 없는 행은 스킵
+        if '사번' not in meta or not meta['사번']:
+            continue
+
+        emp_id = meta.get('사번', '')
         profile_id = meta.get('profileId', emp_id)  # profileId가 없으면 사번 사용
         
         if emp_id not in seen and emp_id != user_id:
