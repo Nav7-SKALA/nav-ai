@@ -9,12 +9,21 @@ from db.postgres import get_company_direction
 
 from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import AIMessage, HumanMessage
-from langchain_core.output_parsers import StrOutputParser
+from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
 from langchain_openai import ChatOpenAI
 from vector_store.chroma_search import find_best_match, get_topN_info, get_topN_emp
 from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords, format_search_results
 import json
 
+# pydantic error -> 반복 실행 횟수 설정
+def limited_retry_chain(chain, input_data: dict, max_retries: int = 2):
+    for attempt in range(1, max_retries + 1):
+        try:
+            return chain.invoke(input_data)
+        except Exception as e:
+            print(f"⚠️ Retry {attempt} failed: {e}")
+            if attempt == max_retries:
+                raise
 
 def exception(state: DevelopState) -> DevelopState:    
     ex_prompt = PromptTemplate(
@@ -103,27 +112,38 @@ def similar_roadmap(state:DevelopState) -> DevelopState:
             input_variables=["internal_employee", "career_summary", "user_query", "role", "job", "skill_set"],
             template=similar_analysis_prompt
         )
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
-        similar_chain = similar_roadmap_prompt | llm.with_structured_output(SimilarRoadMapResult)
-        result = similar_chain.invoke({
-            "internal_employee": info,
-            "career_summary": state.get("career_summary", ""),
-            "user_query": state.get("rewrited_query", ""),
-            "role": role, "skill_set": skill_set, "job": job
-        })
-        return {
-            **state,
-            'result': {'similar_text': result.similar_analysis_text,
-                       'similar_roadmaps': result.similar_analysis_roadmap},
-            'messages': [AIMessage(result.similar_analysis_text),
-                         AIMessage(json.dumps(result.similar_analysis_roadmap, ensure_ascii=False))]
-        }
+        parser = PydanticOutputParser(pydantic_object=SimilarRoadMapResult)
+        llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE, verbose=True)
+
+        similar_chain = similar_roadmap_prompt | llm | parser
+        try:
+            result = limited_retry_chain(similar_chain, {
+                "internal_employee": info,
+                "career_summary": state.get("career_summary", ""),
+                "user_query": state.get("rewrited_query", ""),
+                "role": role, "skill_set": skill_set, "job": job
+            }, max_retries=2)
+
+        except Exception as e:
+            print("❌ 모든 재시도 실패. 기본 결과 반환.", e)
+            result = SimilarRoadMapResult()
+
     except Exception as e:
-        return {**state,
-                'result': {'text': "invoke"+str(e),
-                           'similar_roadmap': None},
-                'error': f"유사한 사내 구성원 데이터 기반 로드맵 작성 중 오류: {str(e)}"
-                }
+        print("❌ 진행 중 실패. 기본 결과 반환.", e)
+        result = SimilarRoadMapResult()
+        # return {**state,
+        #         'result': {'similar_text': "invoke"+str(e),
+        #                    'similar_roadmaps': []},
+        #         'error': f"유사한 사내 구성원 데이터 기반 로드맵 작성 중 오류: {str(e)}"
+        #         }
+    
+    # print(result)
+    return {**state,
+            'result': result.to_output_dict(),
+            'messages': [AIMessage(result.similar_analysis_text),
+                         AIMessage(json.dumps(result.to_output_dict()["similar_roadmaps"], ensure_ascii=False))
+                        ]
+        }
 
 def path(state: DevelopState) -> DevelopState:
     """ 
@@ -137,36 +157,48 @@ def path(state: DevelopState) -> DevelopState:
         input_variables=["internal_employee", "career_summary", "user_query", "role", "job", "skill_set", "direction"],
         template=career_recommend_prompt
         )
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
-        path_chain = path_recommend_prompt | llm.with_structured_output(PathRecommendResult)
-        result = path_chain.invoke({
-            "career_summary": state.get("career_summary", ""),
-            "user_query": state.get("rewrited_query", ""),
-            "common_patterns": state.get("result", {}).get("similar_roadmaps", ""),
-            "direction": direction,
-            "role": role, "skill_set": skill_set, "job": job
-        })
-        return {
-            **state,
-            'result': {**state.get("result", {}),
-                        'text': result.career_path_text,
-                        'roadmaps': result.career_path_roadmap
-                        },
-            'messages': [AIMessage(result.career_path_text),
-                         AIMessage(json.dumps(result.career_path_roadmap, ensure_ascii=False))]
-        }
+        llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE, verbose=True)
+
+        parser = PydanticOutputParser(pydantic_object=PathRecommendResult)
+        path_chain = path_recommend_prompt | llm | parser
+        try:
+            result = limited_retry_chain(path_chain, {
+                "career_summary": state.get("career_summary", ""),
+                "user_query": state.get("rewrited_query", ""),
+                "common_patterns": state.get("result", {}).get("similar_roadmaps", ""),
+                "direction": direction,
+                "role": role, "skill_set": skill_set, "job": job
+            }, max_retries=2)
+
+        except Exception as e:
+            print("❌ 모든 재시도 실패. 기본 결과 반환.", e)
+            result = PathRecommendResult()
+
     except Exception as e:
-        return {**state, 
-                'result': {'text': "invoke"+ str(e),
-                           'roadmap' : None
-                           },
-                'error' : f"경로 추천 중 오류: {str(e)}"
-                           }
+        print("❌ 진행 중 실패. 기본 결과 반환.", e)
+        result = PathRecommendResult()
+        # return {**state, 
+        #         'result': {'text': "invoke"+ str(e),
+        #                    'roadmaps' : []
+        #                    },
+        #         'error' : f"경로 추천 중 오류: {str(e)}"
+        #                    }
+
+    # print(result)
+    return {**state,
+            'result': {**state.get("result", {}),
+                        **result.to_output_dict()
+                      },
+            'messages': [AIMessage(result.career_path_text),
+                         AIMessage(json.dumps(
+                                [r.model_dump() for r in result.career_path_roadmap],
+                                ensure_ascii=False))]
+            }
     
+
 def role_model(state: DevelopState) -> DevelopState:
     """
-    롤모델 그룹 생성 노드
-    현재: 명시적으로 내부에서 노드 순차적 실행하게 만들어 둠
+    롤모델 그룹 생성 노드 (Pydantic 파싱 실패 시 최대 2회 재시도 포함)
     """
     try:
         top_n = 5
@@ -174,29 +206,37 @@ def role_model(state: DevelopState) -> DevelopState:
         grouping_prompt = PromptTemplate(
             input_variables=["similar_employees", "user_query", "total_count", "skill_set", "job", "role", "domain"],
             template=role_prompt
-            )
+        )
         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
-        rolemodel_chain = grouping_prompt | llm.with_structured_output(GroupedRoleModelResult)
-        structured_result = rolemodel_chain.invoke({
-            "similar_employees": info,
-            "user_query": state.get('input_query'),
-            "total_count": top_n,
-            "skill_set": skill_set,
-            "role": role,
-            "domain": domain,
-            "job": job
-        })
-        
+        parser = PydanticOutputParser(pydantic_object=GroupedRoleModelResult)
+        rolemodel_chain = grouping_prompt | llm | parser
+
+        try:
+            structured_result = limited_retry_chain(
+                rolemodel_chain,
+                {
+                    "similar_employees": info,
+                    "user_query": state.get('input_query'),
+                    "total_count": top_n,
+                    "skill_set": skill_set,
+                    "role": role,
+                    "domain": domain,
+                    "job": job
+                },
+                max_retries=2
+            )
+        except Exception as e:
+            print("❌ 롤모델 재시도 실패. 기본 결과 반환.", e)
+            structured_result = GroupedRoleModelResult()
+
         role_model_list = []
         for i, group in enumerate(structured_result.groups):
             role_model_dict = {
                 'group_id': f'group_{i+1}',
                 'group_name': group.group_name,
-                # 'group_description': group.group_description,
                 'current_position': group.role_model.current_position,
                 'experience_years': group.role_model.experience_years,
                 'main_domains': group.role_model.main_domains,
-                # 'skill_set': group.role_model.skill_set,
                 'advice_message': group.role_model.advice_message,
                 'common_skill_set': group.common_skill_set,
                 'common_career_path': group.common_career_path,
@@ -205,9 +245,7 @@ def role_model(state: DevelopState) -> DevelopState:
                 'common_cert': group.common_cert
             }
             role_model_list.append(role_model_dict)
-        
-        print(role_model_list)
-        # 요약 정보 생성
+
         summary_text = f"""🎯 분석 완료: {structured_result.total_employees}명의 사원 데이터를 {len(structured_result.groups)}개 그룹으로 분류
 
 📋 생성된 롤모델 그룹:
@@ -230,17 +268,97 @@ def role_model(state: DevelopState) -> DevelopState:
     for model in role_model_list
 ])}
 """
-        
-        return {
-            **state,
+
+    except Exception as e:
+        # TODO: 다른 노드 실행할 수 있도록 처리 (출력값이 없을 수는 없게)
+        return {**state,
+                'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
+
+    return {**state,
             'result': {
                 'rolemodels': role_model_list,
             },
             'messages': AIMessage(summary_text)
         }
-    except Exception as e:
-        return {**state, 'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
+
+# def role_model(state: DevelopState) -> DevelopState:
+#     """
+#     롤모델 그룹 생성 노드
+#     현재: 명시적으로 내부에서 노드 순차적 실행하게 만들어 둠
+#     """
+#     try:
+#         top_n = 5
+#         info = get_topN_emp(state.get('rag_query',''), state.get('user_id',''), top_n)
+#         grouping_prompt = PromptTemplate(
+#             input_variables=["similar_employees", "user_query", "total_count", "skill_set", "job", "role", "domain"],
+#             template=role_prompt
+#             )
+#         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+#         rolemodel_chain = grouping_prompt | llm.with_structured_output(GroupedRoleModelResult)
+#         structured_result = rolemodel_chain.invoke({
+#             "similar_employees": info,
+#             "user_query": state.get('input_query'),
+#             "total_count": top_n,
+#             "skill_set": skill_set,
+#             "role": role,
+#             "domain": domain,
+#             "job": job
+#         })
+        
+#         role_model_list = []
+#         for i, group in enumerate(structured_result.groups):
+#             role_model_dict = {
+#                 'group_id': f'group_{i+1}',
+#                 'group_name': group.group_name,
+#                 'current_position': group.role_model.current_position,
+#                 'experience_years': group.role_model.experience_years,
+#                 'main_domains': group.role_model.main_domains,
+#                 'advice_message': group.role_model.advice_message,
+#                 'common_skill_set': group.common_skill_set,
+#                 'common_career_path': group.common_career_path,
+#                 'common_project': group.common_project,
+#                 'common_experience': group.common_experience,
+#                 'common_cert': group.common_cert
+#             }
+#             role_model_list.append(role_model_dict)
+        
+#         print(role_model_list)
+#         # 요약 정보 생성
+#         summary_text = f"""🎯 분석 완료: {structured_result.total_employees}명의 사원 데이터를 {len(structured_result.groups)}개 그룹으로 분류
+
+# 📋 생성된 롤모델 그룹:
+# {chr(10).join([f"• {group.group_name}: {group.role_model.name} ({group.member_count}명)" for group in structured_result.groups])}
+
+# 💡 {structured_result.analysis_summary}
+
+# 📊 상세 롤모델 정보:
+# {chr(10).join([
+#     f"▶ {model['group_name']} (ID: {model['group_id']})" + chr(10) +
+#     f"  • 현재 직책: {model['current_position']}" + chr(10) +
+#     f"  • 경력: {model['experience_years']}" + chr(10) +
+#     f"  • 주요 도메인: {', '.join(model['main_domains'])}" + chr(10) +
+#     f"  • 조언: {model['advice_message']}" + chr(10) +
+#     f"  • 공통 기술 스택: {', '.join(model['common_skill_set'])}" + chr(10) +
+#     f"  • 공통 경력 증진 패턴: {', '.join(model['common_career_path'])}" + chr(10) +
+#     f"  • 공통 프로젝트: {', '.join(model['common_project'])}" + chr(10) +
+#     f"  • 공통 경험: {', '.join(model['common_experience'])}" + chr(10) +
+#     f"  • 공통 자격증: {', '.join(model['common_cert'])}" + chr(10)
+#     for model in role_model_list
+# ])}
+# """
+        
+#         return {
+#             **state,
+#             'result': {
+#                 'rolemodels': role_model_list,
+#             },
+#             'messages': AIMessage(summary_text)
+#         }
+#     except Exception as e:
+#         return {**state, 
+#                 'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
     
+
 async def trend(state: DevelopState) -> DevelopState:
     llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
 
