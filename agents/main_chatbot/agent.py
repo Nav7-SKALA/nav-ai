@@ -5,6 +5,8 @@ from agents.main_chatbot.prompt import similar_analysis_prompt, career_recommend
 from agents.main_chatbot.developstate import DevelopState
 from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE, role, skill_set, domain, job
 from agents.main_chatbot.response import PromptWrite, PathRecommendResult, GroupedRoleModelResult, SimilarRoadMapResult
+from db.postgres import get_company_direction
+
 from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
@@ -40,13 +42,13 @@ def intent_analize(state: DevelopState) -> DevelopState:
     llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
     response = llm.invoke(messages)
     intent = response.content.strip()
+    print(f"Intent: {intent}")
     return {**state, 
             'intent': intent,
             'messages': HumanMessage(input_query)}
 
 def rewrite(state: DevelopState) -> DevelopState:
     try:
-
         input_query = state.get("input_query", "")
         user_id = state.get("user_id", "")
         career_summary = state['career_summary']
@@ -58,9 +60,8 @@ def rewrite(state: DevelopState) -> DevelopState:
         if not user_id:
             return {**state, 
                     "result": {'detail': '사용자 ID가 없습니다.'}}
-            
         rewriter_prompt = PromptTemplate(
-            input_variables=["career_summary", "chat_summary", "user_query", "role", "skill_set", "domain", "intent"],
+            input_variables=["career_summary", "chat_summary", "user_query", "role", "skill_set", "domain", "intent"], 
             template=rewrite_prompt
             )
         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
@@ -70,6 +71,7 @@ def rewrite(state: DevelopState) -> DevelopState:
             "chat_summary" : chat_summary,
             "user_query": input_query,
             "intent": intent,
+            # "direction": direction,
             "role": role, "skill_set": skill_set, "domain": domain
         })
         return {
@@ -130,8 +132,9 @@ def path(state: DevelopState) -> DevelopState:
     """
     try:
         # info = find_best_match(state.get('rag_query',''),state.get('user_id',''))
+        direction = '모든 업무와 프로젝트에 AI를 기본 적용할 줄 아는 AI 기본 역량을 갖춘 사내 구성원' # get_company_direction()
         path_recommend_prompt = PromptTemplate(
-        input_variables=["internal_employee", "career_summary", "user_query", "role", "job", "skill_set"],
+        input_variables=["internal_employee", "career_summary", "user_query", "role", "job", "skill_set", "direction"],
         template=career_recommend_prompt
         )
         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
@@ -140,6 +143,7 @@ def path(state: DevelopState) -> DevelopState:
             "career_summary": state.get("career_summary", ""),
             "user_query": state.get("rewrited_query", ""),
             "common_patterns": state.get("result", {}).get("similar_roadmaps", ""),
+            "direction": direction,
             "role": role, "skill_set": skill_set, "job": job
         })
         return {
@@ -268,11 +272,14 @@ async def trend(state: DevelopState) -> DevelopState:
 async def future_career_recommend(state: DevelopState) -> DevelopState:
     """
     경력 요약 기반 미래 직무 추천 노드 (async 버전)
-    1. 경력 요약에서 기술 스택 파악
+    1. 경력 요약, 회사 방향성에서 주요 기술 스택 파악
     2. 다중 소스 검색으로 최신 기술 트렌드 수집
     3. 15년 후 직무 추천
     """
     try:
+        # 회사 방향성 주입
+        direction = '모든 업무와 프로젝트에 AI를 기본 적용할 줄 아는 AI 기본 역량을 갖춘 사내 구성원' # get_company_direction()
+
         career_summary = state.get('career_summary', '')
         user_query = state.get('input_query', '')
         
@@ -289,15 +296,14 @@ async def future_career_recommend(state: DevelopState) -> DevelopState:
         
         # 1단계: 경력 요약에서 기술 스택 추출
         tech_extraction_template = PromptTemplate(
-            input_variables=["career_summary", "user_query"],
+            input_variables=["career_summary", "user_query", "direction"],
             template=tech_extraction_prompt
         )
-        
         tech_extraction_chain = tech_extraction_template | llm
-        
         tech_analysis_result = tech_extraction_chain.invoke({
             "career_summary": career_summary,
-            "user_query": user_query
+            "user_query": user_query,
+            "direction": direction
         })
 
         # 2단계: 키워드 추출
@@ -305,9 +311,7 @@ async def future_career_recommend(state: DevelopState) -> DevelopState:
             input_variables=["analysis_result"],
             template=future_search_prompt
         )
-        
         keyword_chain = keyword_template | llm
-        
         keywords_result = keyword_chain.invoke({
             "analysis_result": tech_analysis_result.content
         })
@@ -324,16 +328,15 @@ async def future_career_recommend(state: DevelopState) -> DevelopState:
 
         # 4단계: 15년 후 미래 직무 추천
         future_job_template = PromptTemplate(
-            input_variables=["career_summary", "tech_analysis", "search_tech_trends"],
+            input_variables=["career_summary", "tech_analysis", "search_tech_trends", "direction"],
             template=future_job_prompt
         )
-        
         future_job_chain = future_job_template | llm
-        
         final_result = future_job_chain.invoke({
             "career_summary": career_summary,
             "tech_analysis": tech_analysis_result.content,
-            "search_tech_trends": formatted_search_results
+            "search_tech_trends": formatted_search_results,
+            "direction": direction
         })
 
         return {
