@@ -1,5 +1,5 @@
 from agents.main_chatbot.prompt import exception_prompt, intent_prompt, rewrite_prompt, rag_prompt, \
-                                        role_prompt, keyword_prompt, chat_summary_prompt, trend_prompt
+                                        keyword_prompt, chat_summary_prompt, trend_prompt
 from agents.main_chatbot.prompt import similar_analysis_prompt, career_recommend_prompt, \
                                        tech_extraction_prompt, future_search_prompt, future_job_prompt,\
                                        internal_expert_mento_prompt, search_keyword_prompt, external_expert_mento_prompt

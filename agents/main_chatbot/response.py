@@ -50,6 +50,25 @@ class SimilarRoadmapCertificationBlock(BaseModel):
     certification: List[SimilarRoadmapCertification]
 
 
+import re
+def format_text_with_newlines(text: str) -> str:
+    """문장이 끝나면 개행 문자를 넣어서 포맷팅"""
+    if not text:
+        return text
+        
+    # 문장 끝 패턴: 마침표, 물음표, 느낌표 뒤에 공백이나 문자가 오는 경우
+    # 단, 숫자.숫자 같은 소수점은 제외
+    sentence_end_pattern = r'([.!?])(\s+)(?=[A-Za-z가-힣])'
+        
+    # 문장 끝에 개행 문자 추가
+    formatted_text = re.sub(sentence_end_pattern, r'\1\n', text)
+        
+    # 연속된 개행 문자 정리 (최대 2개까지만)
+    formatted_text = re.sub(r'\n{3,}', '\n\n', formatted_text)
+        
+    return formatted_text.strip()
+
+
 class SimilarRoadMapResult(BaseModel):
     similar_analysis_text: str = Field(
         default="유사한 경력 경로를 가진 사내 구성원의 성장 데이터를 찾을 수 없습니다.\n원하는 경력 목표 직무를 더 자세히 작성해주세요.",
@@ -76,7 +95,7 @@ class SimilarRoadMapResult(BaseModel):
 
     def to_output_dict(self):
         return {
-            'similar_text': self.similar_analysis_text,
+            'similar_text': format_text_with_newlines(self.similar_analysis_text),
             # 'similar_roadmaps': [r.model_dump() for r in self.similar_analysis_roadmap]
             'similar_roadmaps': [
                 self.project.model_dump(),
@@ -84,7 +103,6 @@ class SimilarRoadMapResult(BaseModel):
                 self.certification.model_dump()
             ]
         }
-
 
 class PathRecommendResult(BaseModel):
     career_path_text: str = Field(
@@ -98,7 +116,7 @@ class PathRecommendResult(BaseModel):
 
     def to_output_dict(self):
         return {
-            'text': self.career_path_text,
+            'text': format_text_with_newlines(self.career_path_text),
             'roadmaps': [r.model_dump() for r in self.career_path_roadmap]
         }
 
