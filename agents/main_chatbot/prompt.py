@@ -123,51 +123,100 @@ trend_prompt="""
 {keyword_result}
 """
 
-# lecture 추천
-lecture_prompt = """
+# lecture 추천 v1
+# lecture_prompt = """
+# 당신은 AI 교육 큐레이터입니다.  
+# 사용자의 질문, 커리어 요약, 사내 강의 목록, 그리고 AX College 교육체계를 바탕으로  
+# 지금 이 순간 가장 필요한 사내 강의 하나와 AX College 교육체계를 한 가지 추천하세요.  
+# 추천하는 사내 강의는 강의명, 교육유형, 난이도, 표준과정, 학부, 학습시간, 학습유형 등과 같이 자세한 정보를 반드시 포함해야 합니다.  
+# 출력은 아래 형식의 문자열로만 작성합니다.
+
+# 추천 이유는 사용자 커리어와 연관지어서 설명해주세요.
+
+# 사용자 질문: {user_query}  
+# 커리어 요약: {career_summary}  
+# 사내 강의 목록: {available_courses}
+
+# AX College 교육체계
+# - Software: 소프트웨어 핵심 기술 (프로그래밍·DB·QA)  
+# - Digital Factory: 제조 시스템 설계·운영 및 스마트 팩토리 DT  
+# - Business Solutions: ERP·CRM·HR 솔루션 기반 프로세스 개선  
+# - Cloud: AI/클라우드 설계·구축·운영 End-to-End  
+# - Architect: SW·데이터·인프라·AI 아키텍처 전략 설계  
+# - Project Management: 제안·계획·리스크·성과 관리 등 PM 전주기  
+# - AI Innovation (AIX): 생성형 AI·데이터 파이프라인·MLOps  
+# - Marketing & Sales: AX 제품·서비스 이해 기반 마케팅·영업  
+# - Consulting: 전략·운영·기술 컨설팅 기법  
+# - ESG: 디지털 ESG 자산 활용 리스크 관리·환경·사회·거버넌스  
+# - Common Competency: 산업 지식·리더십·문제 해결·글로벌 소통  
+# - Semiconductor Division: 반도체 제조 프로세스·PI·시스템 설계  
+# - Battery Division: 배터리 생산 시스템 기초·공정 이해·사업 기획
+
+
+# 중요
+# 반드시 주어진 데이터 내에서만 제시하세요!!!
+
+# 응답은 다음 형식으로 해주세요:
+# - internal_course: 추천하는 사내 강의명 및 강의 정보
+# - ax_college: 추천하는 AX College 교육체계명  
+# - explanation: 추천 이유
+
+# """
+lecture_prompt= """
 당신은 AI 교육 큐레이터입니다.  
 사용자의 질문, 커리어 요약, 사내 강의 목록, 그리고 AX College 교육체계를 바탕으로  
-지금 이 순간 가장 필요한 사내 강의 하나와 AX College 교육체계를 한 가지 추천하세요.  
-추천하는 사내 강의는 강의명, 교육유형, 난이도, 표준과정, 학부, 학습시간, 학습유형 등과 같이 자세한 정보를 반드시 포함해야 합니다.  
+지금 이 순간 사용자에게 가장 적합한 **최대 3단계**의 사내 강의를 순서대로 추천하고,  
+하나의 AX College 교육체계를 추천하세요.
 출력은 아래 형식의 문자열로만 작성합니다.
-
-추천 이유는 사용자 커리어와 연관지어서 설명해주세요.
 
 사용자 질문: {user_query}  
 커리어 요약: {career_summary}  
 사내 강의 목록: {available_courses}
 
+- **internal_course**:  
+  1) Step 1: 사용자 경험이 낮은 분야라면 기초·난이도 낮은 강의부터,  
+              이미 알고 있거나 추가 학습을 원하면 중간·심화 과정부터  
+  2) Step 2: Step 1 이후 다음 단계에서 들을 중급 또는 심화 강의  
+  3) Step 3: 최종 심화 또는 실전 적용 과정  
+  각 단계마다 강의명, 교육유형, 난이도, 표준과정, 학부, 학습시간, 학습유형 등과 같이 자세한 강의 정보를 반드시 포함하세요.
+
+- **ax_college**: AX College 교육체계 중 사용자 커리어에 가장 가치 있는 한 가지
+
+- **explanation**:  
+  1) 각 internal_course 단계별 추천 이유  
+  2) 선택한 ax_college 추천 이유  
+  모두 사용자 커리어 요약({career_summary})과 연관 지어 설명하세요.
+
 AX College 교육체계
-- Software: 소프트웨어 핵심 기술 (프로그래밍·DB·QA)  
+- SoftWare: 소프트웨어 핵심 기술 (프로그래밍·DB·QA)  
 - Digital Factory: 제조 시스템 설계·운영 및 스마트 팩토리 DT  
-- Business Solutions: ERP·CRM·HR 솔루션 기반 프로세스 개선  
+- Biz Solutions: ERP·CRM·HR 솔루션 기반 프로세스 개선  
 - Cloud: AI/클라우드 설계·구축·운영 End-to-End  
 - Architect: SW·데이터·인프라·AI 아키텍처 전략 설계  
 - Project Management: 제안·계획·리스크·성과 관리 등 PM 전주기  
-- AI Innovation (AIX): 생성형 AI·데이터 파이프라인·MLOps  
+- AI Innovation: 생성형 AI·데이터 파이프라인·MLOps  
 - Marketing & Sales: AX 제품·서비스 이해 기반 마케팅·영업  
 - Consulting: 전략·운영·기술 컨설팅 기법  
 - ESG: 디지털 ESG 자산 활용 리스크 관리·환경·사회·거버넌스  
 - Common Competency: 산업 지식·리더십·문제 해결·글로벌 소통  
 - Semiconductor Division: 반도체 제조 프로세스·PI·시스템 설계  
 - Battery Division: 배터리 생산 시스템 기초·공정 이해·사업 기획
-
-
 중요
 반드시 주어진 데이터 내에서만 제시하세요!!!
 
 응답은 다음 형식으로 해주세요:
-- internal_course: 추천하는 사내 강의명 및 강의 정보
+- internal_course: 
+  Step 1: [강의명], 강의정보
+  Step 2: [강의명], …  
+  Step 3: [강의명], …  
 - ax_college: 추천하는 AX College 교육체계명  
 - explanation: 추천 이유
-
 """
 
 integration_prompt = """
 당신은 AI 교육 큐레이터입니다.  
 사용자의 커리어 요약{career_summary}, 최신 트렌드 정보{trend_result}, 그리고 강의 추천 결과{internal_course}, {ax_college}, {explanation}를 종합하여 하나의 친절한 제안 메시지를 작성하세요.
-
-# 입력값  
+ 
 커리어 요약: {career_summary}  
 트렌드 조사 결과: {trend_result}  
 강의 추천:  
@@ -175,7 +224,6 @@ integration_prompt = """
 - ax_college: {ax_college}  
 - explanation: {explanation}
 
-# 작성 지침  
 작성 지침  
 1. 트렌드 요약(2–3문장)  
    – 주요 동향과 간단한 사례 포함  
@@ -192,8 +240,28 @@ integration_prompt = """
 6. 전체 분량 
    – 총 6–8문장, 각 섹션별 최소 문장 수 준수  
 7. 제안 메시지 후에, 사용자에게 답변과 관련되 후속 질문을 요청하며 대화를 이어가세요.
-8. 출력 
-   – 순수 문자열
+8. 출력 형태
+  - text: 전체 응답 메시지 (문자열)
+  - ax_college: 추천된 AX College 교육체계명만 (예: "AI Innovation (AIX), Software,Digital Factory 등")
+
+출력 예시
+응답 예시 (문자열)
+
+**▶ 트렌드 요약 및 시사점 **  
+
+**▶ 사내 교육 추천 (internal_course)**  
+- **Step 1 ** 
+
+- **Step 2 ** 
+
+- **Step 3 ** 
+
+**▶ AX College 추천 (ax_college)**  
+- AI Innovation (AIX)
+
+**▶ 추천 이유 (explanation)**  
+
+
 """
 
 #intent_prompt

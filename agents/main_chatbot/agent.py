@@ -4,7 +4,8 @@ from agents.main_chatbot.prompt import similar_analysis_prompt, career_recommend
                                        tech_extraction_prompt, future_search_prompt, future_job_prompt, integration_prompt
 from agents.main_chatbot.developstate import DevelopState
 from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE, role, skill_set, domain, job
-from agents.main_chatbot.response import PromptWrite, PathRecommendResult, GroupedRoleModelResult, SimilarRoadMapResult
+from agents.main_chatbot.response import PromptWrite, PathRecommendResult, GroupedRoleModelResult, SimilarRoadMapResult, \
+                                        TrendResult
 from db.postgres import get_company_direction
 
 from langchain_core.prompts import PromptTemplate
@@ -274,7 +275,7 @@ async def trend(state: DevelopState) -> DevelopState:
             template=integration_prompt
         )
         
-        integration_chain = integration_template | llm
+        integration_chain = integration_template | llm.with_structured_output(TrendResult)
         final_result = integration_chain.invoke({
             "career_summary": state.get("career_summary"),
             "trend_result": trend_result,
@@ -286,8 +287,9 @@ async def trend(state: DevelopState) -> DevelopState:
         # 5. 최종 결과 반환 (기존 구조 유지)
         return {
             **state,
-            'result': {'text': final_result.content},
-            'messages': AIMessage(final_result.content)
+            'result': {'text': final_result.text,
+                        'ax_college': final_result.ax_college},
+            'messages': AIMessage(final_result.text)
         }
         
     except Exception as e:
@@ -295,7 +297,8 @@ async def trend(state: DevelopState) -> DevelopState:
         error_message = f"통합 분석 중 오류 발생: {str(e)}"
         return {
             **state,
-            'result': {'text': error_message},
+            'result': {'text': error_message,
+                       'ax_college': final_result.ax_college},
             'messages': AIMessage(error_message)
         }
 
