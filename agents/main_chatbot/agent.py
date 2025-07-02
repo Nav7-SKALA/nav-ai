@@ -1,10 +1,11 @@
 from agents.main_chatbot.prompt import exception_prompt, intent_prompt, rewrite_prompt, rag_prompt, \
                                         role_prompt, keyword_prompt, chat_summary_prompt, trend_prompt
 from agents.main_chatbot.prompt import similar_analysis_prompt, career_recommend_prompt, \
-                                       tech_extraction_prompt, future_search_prompt, future_job_prompt
+                                       tech_extraction_prompt, future_search_prompt, future_job_prompt,\
+                                       internal_expert_mento_prompt, search_keyword_prompt, external_expert_mento_prompt
 from agents.main_chatbot.developstate import DevelopState
 from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE, role, skill_set, domain, job
-from agents.main_chatbot.response import PromptWrite, PathRecommendResult, GroupedRoleModelResult, SimilarRoadMapResult
+from agents.main_chatbot.response import PromptWrite, PathRecommendResult, RoleModelGroup, GroupedRoleModelResult, SimilarRoadMapResult
 from db.postgres import get_company_direction
 
 from langchain_core.prompts import PromptTemplate
@@ -12,7 +13,8 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
 from langchain_openai import ChatOpenAI
 from vector_store.chroma_search import find_best_match, get_topN_info, get_topN_emp
-from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords, format_search_results
+from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords, format_search_results, tavily_search_for_keywords
+from agents.tools.tavily_search import search_tavily
 import json
 
 # pydantic error -> 반복 실행 횟수 설정
@@ -196,41 +198,202 @@ def path(state: DevelopState) -> DevelopState:
             }
     
 
-def role_model(state: DevelopState) -> DevelopState:
+
+### role_model 생성 관련 노드 (비동기)
+async def create_internal_expert(state: DevelopState) -> DevelopState:
+    """사내 전문가 멘토 생성"""
+    try:
+        print('사내 전문가 멘토 생성 시작')
+        llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE, verbose=True)
+        user_query = state.get('rag_query', state.get('input_query', ''))
+        print(user_query)
+        expert_info = get_topN_info(query_text = user_query,
+                                    user_id = state.get('user_id', ''),
+                                    grade = 'CL4', # ? 확인 필요 
+                                    top_n=5)
+        if not expert_info.strip():
+            return None
+                
+        similar_prompt = PromptTemplate(
+                            input_variables=["user_query", "internal_employees", "total_count", "skill_set", "role", "job", "domain"],
+                            template=internal_expert_mento_prompt
+                        )
+        parser = PydanticOutputParser(pydantic_object=RoleModelGroup)
+        internal_chain = similar_prompt | llm | parser
+        result = limited_retry_chain(internal_chain,
+                        {"user_query": user_query,
+                        "internal_employees": expert_info,
+                        "total_count": 5,
+                        "skill_set": skill_set,
+                        "role": role,
+                        "domain": domain,
+                        "job": job
+                        },
+                        max_retries=2
+                )
+        print(result)
+        result.group_name = "사내 전문가"
+
+        print("✅ 사내 전문가 멘토 생성 완료")
+        return result
+    
+    except Exception as e:
+        print(f"❌ 사내 전문가 멘토 생성 실패: {e}")
+        return None
+    
+async def create_internal_similar(state: DevelopState) -> DevelopState:
+    """사내 유사 경력 멘토 생성"""
+    try:
+        print('사내 유사 경력 멘토 생성 시작')
+        llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE, verbose=True)
+        user_query = state.get('rag_query', state.get('input_query', ''))
+        
+        similar_info = get_topN_info(query_text = user_query,
+                                    user_id = state.get('user_id', ''),
+                                    years = True,  
+                                    top_n=5)
+        if not similar_info.strip():
+            return None
+                
+        similar_prompt = PromptTemplate(
+                            input_variables=["user_query", "internal_employees", "total_count", "skill_set", "role", "job", "domain"],
+                            template=internal_expert_mento_prompt
+                        )
+        parser = PydanticOutputParser(pydantic_object=RoleModelGroup)
+        internal_chain = similar_prompt | llm | parser
+        result = limited_retry_chain(internal_chain,
+                        {"user_query": user_query,
+                        "internal_employees": similar_info,
+                        "total_count": 5,
+                        "skill_set": skill_set,
+                        "role": role,
+                        "domain": domain,
+                        "job": job
+                        },
+                        max_retries=2
+                )
+        result.group_name = "사내 유사 경력 구성원"
+        print(result)
+        print("✅ 사내 유사 경력 멘토 생성 완료")
+        return result
+    
+    except Exception as e:
+        print(f"❌ 사내 유사 경력 멘토 생성 실패: {e}")
+        return None
+
+async def create_external_expert(state: DevelopState) -> DevelopState:
+    """외부 전문가 멘토 생성 (검색 + 생성)"""
+    try:
+        print('외부 전문가 멘토 생성 시작')
+        llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+        user_query = state.get('rag_query', state.get('input_query', ''))
+        # 1. 검색 키워드 생성
+        keyword_prompt = PromptTemplate(
+            input_variables=["user_query"],
+            template=search_keyword_prompt
+        )
+        keyword_chain = keyword_prompt | llm
+        keywords_result = keyword_chain.invoke({"user_query": user_query})
+        if not hasattr(keywords_result, "content") or not keywords_result.content.strip():
+            raise ValueError("키워드 생성 실패")
+
+        keywords = keywords_result.content.strip().split(',')
+
+        # 2. 병렬 검색 실행
+        search_results_list = await tavily_search_for_keywords(keywords)
+
+        # 3. 검색 결과 통합
+        all_results = []
+        for i, results in enumerate(search_results_list):
+            if isinstance(results, Exception):
+                print(f"❌ 키워드 {i + 1} 검색 실패: {results}")
+                continue
+            all_results.extend(results)
+
+        if all_results:
+            external_info = f"""[외부 전문가 검색 결과]
+검색 키워드: {', '.join(keywords[:5])}
+사용자 질문: {user_query}
+
+=== 검색 결과 ===
+{chr(10).join(all_results)}
+"""
+        else:
+            external_info = f"""[외부 전문가 기본 정보]
+사용자 질문: {user_query}
+검색 결과가 제한적이므로 기본 정보로 멘토 생성 필요
+"""
+
+        # 4. 외부 전문가 멘토 생성
+        external_prompt = PromptTemplate(
+            input_variables=["user_query", "skill_set", "domain", "job", "external_info"],
+            template=external_expert_mento_prompt
+        )
+        parser = PydanticOutputParser(pydantic_object=RoleModelGroup)
+        external_chain = external_prompt | llm | parser
+
+        result = limited_retry_chain(
+            external_chain,
+            {
+                "user_query": user_query,
+                "skill_set": skill_set,
+                "domain": domain,
+                "job": job,
+                "external_info": external_info
+            },
+            max_retries=2
+        )
+        result.group_name = "외부 전문가"
+        result.real_info = []
+        print("✅ 외부 전문가 멘토 생성 완료")
+        return result
+
+    except Exception as e:
+        print(f"❌ 외부 전문가 멘토 생성 실패: {e}")
+        return None
+
+import asyncio
+
+async def role_model(state: DevelopState) -> DevelopState:
     """
-    롤모델 그룹 생성 노드 (Pydantic 파싱 실패 시 최대 2회 재시도 포함)
+    롤모델 그룹 생성 (비동기 병렬 처리)
+    Ver.3 사내 전문가, 사내 유사 경력, 외부 전문가를 비동기로 병렬 생성
     """
     try:
-        top_n = 5
-        info = get_topN_emp(state.get('rag_query',''), state.get('user_id',''), top_n)
-        grouping_prompt = PromptTemplate(
-            input_variables=["similar_employees", "user_query", "total_count", "skill_set", "job", "role", "domain"],
-            template=role_prompt
-        )
+        # LLM 설정
         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
-        parser = PydanticOutputParser(pydantic_object=GroupedRoleModelResult)
-        rolemodel_chain = grouping_prompt | llm | parser
-
-        try:
-            structured_result = limited_retry_chain(
-                rolemodel_chain,
-                {
-                    "similar_employees": info,
-                    "user_query": state.get('input_query'),
-                    "total_count": top_n,
-                    "skill_set": skill_set,
-                    "role": role,
-                    "domain": domain,
-                    "job": job
-                },
-                max_retries=2
+        # 모든 태스크를 병렬로 실행
+        print("🚀 멘토 생성 태스크들을 병렬로 시작...")
+        results = await asyncio.gather(
+            create_internal_expert(state),
+            create_internal_similar(state), 
+            create_external_expert(state),
+            return_exceptions=True
+        )
+        
+        # 성공한 결과만 수집
+        successful_groups = []
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                print(f"❌ 태스크 {i+1} 실행 중 예외 발생: {result}")
+                continue
+            if result is not None:
+                successful_groups.append(result)
+        
+        # 최종 결과 구성
+        if successful_groups:
+            # GroupedRoleModelResult 형태로 구성
+            final_result = GroupedRoleModelResult(
+                analysis_summary=f"총 {len(successful_groups)}개의 멘토 그룹이 생성되었습니다.",
+                groups=successful_groups
             )
-        except Exception as e:
-            print("❌ 롤모델 재시도 실패. 기본 결과 반환.", e)
-            structured_result = GroupedRoleModelResult()
-
+        else:
+            print("❌ 생성된 멘토 그룹이 없습니다.")
+            final_result = GroupedRoleModelResult()
+        
+        # 기존 포맷으로 변환
         role_model_list = []
-        for i, group in enumerate(structured_result.groups):
+        for i, group in enumerate(final_result.groups):
             role_model_dict = {
                 'group_id': f'group_{i+1}',
                 'group_name': group.group_name,
@@ -245,13 +408,15 @@ def role_model(state: DevelopState) -> DevelopState:
                 'common_cert': group.common_cert
             }
             role_model_list.append(role_model_dict)
+        
+        # 요약 텍스트 생성
+        if role_model_list:
+            summary_text = f"""🎯 병렬 멘토 생성 완료
 
-        summary_text = f"""🎯 분석 완료: {structured_result.total_employees}명의 사원 데이터를 {len(structured_result.groups)}개 그룹으로 분류
+📋 생성된 롤모델 그룹 ({len(role_model_list)}개):
+{chr(10).join([f"• {group.group_name}: {group.role_model.name}" for group in final_result.groups])}
 
-📋 생성된 롤모델 그룹:
-{chr(10).join([f"• {group.group_name}: {group.role_model.name} ({group.member_count}명)" for group in structured_result.groups])}
-
-💡 {structured_result.analysis_summary}
+💡 {final_result.analysis_summary}
 
 📊 상세 롤모델 정보:
 {chr(10).join([
@@ -268,23 +433,25 @@ def role_model(state: DevelopState) -> DevelopState:
     for model in role_model_list
 ])}
 """
+        else:
+            summary_text = "❌ 멘토 그룹 생성에 실패했습니다."
 
     except Exception as e:
-        # TODO: 다른 노드 실행할 수 있도록 처리 (출력값이 없을 수는 없게)
-        return {**state,
-                'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
+        print(f"❌ 롤모델 생성 중 전체 오류 발생: {e}")
+        return {**state, 'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
 
-    return {**state,
-            'result': {
-                'rolemodels': role_model_list,
-            },
-            'messages': AIMessage(summary_text)
-        }
+    return {
+        **state,
+        'result': {
+            'rolemodels': role_model_list,
+        },
+        'messages': AIMessage(summary_text)
+    }
+
 
 # def role_model(state: DevelopState) -> DevelopState:
 #     """
-#     롤모델 그룹 생성 노드
-#     현재: 명시적으로 내부에서 노드 순차적 실행하게 만들어 둠
+#     롤모델 그룹 생성 노드 (Pydantic 파싱 실패 시 최대 2회 재시도 포함)
 #     """
 #     try:
 #         top_n = 5
@@ -292,19 +459,29 @@ def role_model(state: DevelopState) -> DevelopState:
 #         grouping_prompt = PromptTemplate(
 #             input_variables=["similar_employees", "user_query", "total_count", "skill_set", "job", "role", "domain"],
 #             template=role_prompt
-#             )
+#         )
 #         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
-#         rolemodel_chain = grouping_prompt | llm.with_structured_output(GroupedRoleModelResult)
-#         structured_result = rolemodel_chain.invoke({
-#             "similar_employees": info,
-#             "user_query": state.get('input_query'),
-#             "total_count": top_n,
-#             "skill_set": skill_set,
-#             "role": role,
-#             "domain": domain,
-#             "job": job
-#         })
-        
+#         parser = PydanticOutputParser(pydantic_object=GroupedRoleModelResult)
+#         rolemodel_chain = grouping_prompt | llm | parser
+
+#         try:
+#             structured_result = limited_retry_chain(
+#                 rolemodel_chain,
+#                 {
+#                     "similar_employees": info,
+#                     "user_query": state.get('input_query'),
+#                     "total_count": top_n,
+#                     "skill_set": skill_set,
+#                     "role": role,
+#                     "domain": domain,
+#                     "job": job
+#                 },
+#                 max_retries=2
+#             )
+#         except Exception as e:
+#             print("❌ 롤모델 재시도 실패. 기본 결과 반환.", e)
+#             structured_result = GroupedRoleModelResult()
+
 #         role_model_list = []
 #         for i, group in enumerate(structured_result.groups):
 #             role_model_dict = {
@@ -321,10 +498,9 @@ def role_model(state: DevelopState) -> DevelopState:
 #                 'common_cert': group.common_cert
 #             }
 #             role_model_list.append(role_model_dict)
-        
-#         print(role_model_list)
-#         # 요약 정보 생성
-#         summary_text = f"""🎯 분석 완료: {structured_result.total_employees}명의 사원 데이터를 {len(structured_result.groups)}개 그룹으로 분류
+
+#         # summary_text = f"""🎯 분석 완료: {structured_result.total_employees}명의 사원 데이터를 {len(structured_result.groups)}개 그룹으로 분류
+#         summary_text = f"""🎯 분석 완료\n
 
 # 📋 생성된 롤모델 그룹:
 # {chr(10).join([f"• {group.group_name}: {group.role_model.name} ({group.member_count}명)" for group in structured_result.groups])}
@@ -346,18 +522,19 @@ def role_model(state: DevelopState) -> DevelopState:
 #     for model in role_model_list
 # ])}
 # """
-        
-#         return {
-#             **state,
+
+#     except Exception as e:
+#         # TODO: 다른 노드 실행할 수 있도록 처리 (출력값이 없을 수는 없게)
+#         return {**state,
+#                 'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
+
+#     return {**state,
 #             'result': {
 #                 'rolemodels': role_model_list,
 #             },
 #             'messages': AIMessage(summary_text)
 #         }
-#     except Exception as e:
-#         return {**state, 
-#                 'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
-    
+  
 
 async def trend(state: DevelopState) -> DevelopState:
     llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
