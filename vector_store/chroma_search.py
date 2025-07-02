@@ -1,6 +1,7 @@
 
 import os
 import re
+import datetime
 from sentence_transformers import SentenceTransformer
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
@@ -29,61 +30,174 @@ def find_best_match(query_text: str, user_id: str):
     return get_multiple_employees_detail(emp_ids)
 
 
-def get_topN_info(query_text, user_id, top_n):
+def get_user_entry_year(profile_id: str):
+    """사용자의 입사년도 조회"""
+    client = get_chroma_client()
+    collection_name = os.getenv("JSON_HISTORY_COLLECTION_NAME")
+    collection = client.get_collection(name=collection_name)
+
+    results = collection.get(where={"profileId": profile_id}, include=["metadatas"])
+    years = [meta.get("입사년도") for meta in results.get("metadatas", []) if "입사년도" in meta]
+    
+    return years[0]
+
+def get_topN_info(query_text, user_id, top_n, grade=None, years=False):
     """(LLM 위한) 상위 n명 간단 정보"""
     client = get_chroma_client()
     collection_name = os.getenv("JSON_HISTORY_COLLECTION_NAME")
     collection = client.get_collection(name=collection_name)
 
+    # 임베딩 생성
     embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"))
     query_embedding = embedding_model.encode([query_text]).tolist()
-    
-    results = collection.query(query_embeddings=query_embedding, n_results=20, include=['metadatas'])
-    
-    # 중복 제거로 n명 선택
+
+    # 필터 구성
+    where_filter = None
+    if grade is not None or years:
+        where_filter = {}
+        
+        # Grade 필터링 (단일 값)
+        if grade is not None:
+            where_filter["grade"] = {"$eq": grade}
+        
+        # 연차 필터링
+        if years:
+            entry_year = get_user_entry_year(user_id)
+            cutoff_year = entry_year - 3
+            where_filter["입사년도"] = {"$gte": cutoff_year}
+
+    # 디버깅용 출력
+    print(f"🔍 검색 쿼리: {query_text}")
+    print(f"🔍 필터 조건: {where_filter}")
+
+    # 검색 실행
+    results = collection.query(
+        query_embeddings=query_embedding,
+        n_results=20,
+        include=['metadatas'],
+        where=where_filter
+    )
+
+    # 결과 확인
+    print(f"🔍 검색 결과 수: {len(results['metadatas'][0]) if results['metadatas'] else 0}")
+
+    # 검색 결과가 없는 경우 처리
+    if not results['metadatas'] or not results['metadatas'][0]:
+        print("❌ 검색 결과가 없습니다. 필터 조건을 확인하세요.")
+        return ""
+
+    # 중복 제거 및 상위 top_n 추출 (사번과 profileId 둘 다 저장)
     seen = set()
     topN = []
     for meta in results['metadatas'][0]:
-
         emp_id = meta['사번']
+        profile_id = meta.get('profileId', emp_id)  # profileId가 없으면 사번 사용
+        
         if emp_id not in seen and emp_id != user_id:
             seen.add(emp_id)
-            topN.append(emp_id)
+            topN.append(profile_id)  # profileId를 저장
+            # print(f"🔍 대상자 추가: 사번={emp_id}, profileId={profile_id}")
             if len(topN) == top_n:
-
                 break
-    
-    # 각 profileId별 전체 경력 정보 구성
-    info = ""
 
+    print(f"🔍 중복 제거 후 대상자: {len(topN)}명")
+    # print(f"🔍 대상자 profileId 목록: {topN}")
+
+    # profileId별 상세 경력 정보 추출
+    info = ""
     for i, profile_id in enumerate(topN, 1):
-        # 해당 profileId의 모든 경력 데이터 가져오기
+        # print(f"🔍 {i}번째 대상자 profileId: {profile_id} 조회 중...")
+        
         emp_data = collection.get(where={"profileId": profile_id}, include=['metadatas'])
+        # print(f"🔍 {profile_id} 조회 결과: {len(emp_data['metadatas']) if emp_data['metadatas'] else 0}건")
         
         if not emp_data['metadatas']:
+            # print(f"❌ profileId {profile_id}에 대한 상세 정보 없음")
             continue
-            
+
         first_meta = emp_data['metadatas'][0]
-        
         info += f"\n{i}. profileId: {profile_id}\n"
         info += f"   사번: {first_meta['사번']}\n"
         info += f"   Grade: {first_meta['grade']}\n"
         info += f"   입사년도: {first_meta['입사년도']}\n"
         info += f"   경력흐름:\n"
-        
-        # 연차순으로 정렬해서 경력 흐름 구성
+
         careers = sorted(emp_data['metadatas'], key=lambda x: x['연차'])
-        
         for j, career in enumerate(careers, 1):
             info += f"     {j}. {career['연차']} - {career['역할']}\n"
             info += f"        스킬셋: {career['스킬셋']}\n"
             info += f"        도메인: {career['도메인']}\n"
             info += f"        프로젝트규모: {career['프로젝트규모']}\n"
             info += f"        요약: {career['요약']}\n"
-        
+
         info += "-" * 50 + "\n"
+        # print(f"🔍 {i}번째 대상자 정보 추가 완료")
     
+    # print(f"📊 최종 정보 길이: {len(info)} 문자")
     return info
+
+# def get_topN_info(query_text, user_id, top_n, grade=False, years=False):
+#     """(LLM 위한) 상위 n명 간단 정보"""
+#     client = get_chroma_client()
+#     collection_name = os.getenv("JSON_HISTORY_COLLECTION_NAME")
+#     collection = client.get_collection(name=collection_name)
+
+#     embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"))
+#     query_embedding = embedding_model.encode([query_text]).tolist()
+    
+#     if grade:
+#         ### TODO: grade filtering
+#         results = ''
+#     elif years:
+#         ### TODO: 사용자 연차와 유사한 구성원 필터링
+#         results = ''
+#     else:
+#         results = collection.query(query_embeddings=query_embedding, n_results=20, include=['metadatas'])
+
+#     # 중복 제거로 n명 선택
+#     seen = set()
+#     topN = []
+#     for meta in results['metadatas'][0]:
+
+#         emp_id = meta['사번']
+#         if emp_id not in seen and emp_id != user_id:
+#             seen.add(emp_id)
+#             topN.append(emp_id)
+#             if len(topN) == top_n:
+
+#                 break
+    
+#     # 각 profileId별 전체 경력 정보 구성
+#     info = ""
+
+#     for i, profile_id in enumerate(topN, 1):
+#         # 해당 profileId의 모든 경력 데이터 가져오기
+#         emp_data = collection.get(where={"profileId": profile_id}, include=['metadatas'])
+        
+#         if not emp_data['metadatas']:
+#             continue
+            
+#         first_meta = emp_data['metadatas'][0]
+        
+#         info += f"\n{i}. profileId: {profile_id}\n"
+#         info += f"   사번: {first_meta['사번']}\n"
+#         info += f"   Grade: {first_meta['grade']}\n"
+#         info += f"   입사년도: {first_meta['입사년도']}\n"
+#         info += f"   경력흐름:\n"
+        
+#         # 연차순으로 정렬해서 경력 흐름 구성
+#         careers = sorted(emp_data['metadatas'], key=lambda x: x['연차'])
+        
+#         for j, career in enumerate(careers, 1):
+#             info += f"     {j}. {career['연차']} - {career['역할']}\n"
+#             info += f"        스킬셋: {career['스킬셋']}\n"
+#             info += f"        도메인: {career['도메인']}\n"
+#             info += f"        프로젝트규모: {career['프로젝트규모']}\n"
+#             info += f"        요약: {career['요약']}\n"
+        
+#         info += "-" * 50 + "\n"
+    
+#     return info
 
 def get_topN_emp(query_text, user_id, top_n):
     """(roleModel agent 위한) 상위 n명 추출 - 개선된 버전"""
@@ -170,6 +284,7 @@ def llm_select(query_text, candidates):
     ids = [id.strip() for id in result.strip().split(',')]
     return ids
 
+
 def get_multiple_employees_detail(emp_ids):
     # TODO: experience, certification 추가해야 함
     """선택된 여러 사원들의 상세 정보를 합쳐서 반환"""
@@ -211,6 +326,7 @@ def get_multiple_employees_detail(emp_ids):
     combined_result = "\n" + ("="*50 + "\n").join(all_results)
     return combined_result
 
+
 def get_employee_detail(profile_id):
     """선택된 사원 상세 정보"""
     client = get_chroma_client()
@@ -239,6 +355,7 @@ def get_employee_detail(profile_id):
         result += f"    상세내용: {doc}\n\n"
     
     return result
+
 
 if __name__ == "__main__":
     result = find_best_match("금융프로젝트 pm", user_id=1)
