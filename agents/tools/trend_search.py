@@ -28,6 +28,11 @@ async def trend_analysis_for_keywords(keywords: List[str]) -> List[Dict]:
     results = await asyncio.gather(*[search_all_sources(k) for k in keywords])
     return results
 
+# 여러 키워드에 대해 병렬 검색 (only tavily)
+async def tavily_search_for_keywords(keywords: List[str]) -> List[Dict]:
+    results = await asyncio.gather(*[search_tavily(k.strip()) for k in keywords])
+    return results
+
 def parse_keywords(raw_output: str) -> list:
     """
     LLM 출력 결과에서 키워드 목록을 파싱하는 함수.
