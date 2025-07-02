@@ -454,7 +454,6 @@ similar_analysis_prompt = """
 - 실제 데이터 기반의 현실적이고 실행 가능한 경로 제안
 - JSON 외 다른 텍스트는 절대 출력하지 마세요
 - similar_analysis_text에는 인삿말 없이, 간결하고 설명 중심의 문장만 포함하세요
-
 """
 
 career_recommend_prompt = """
@@ -662,6 +661,7 @@ JSON 외의 출력은 허용되지 않습니다.
 모든 필드를 빠짐없이 채우세요.
 experience, cert의 경우, 없으면 [] 빈 배열을 반환하세요.
 """
+
 
 tech_extraction_prompt = """
 다음 경력 요약에서 사용자의 주요 기술 스택과 전문 분야를 파악하고, 연관된 미래 기술 키워드를 추출해주세요.

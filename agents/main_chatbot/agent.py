@@ -1,7 +1,7 @@
 from agents.main_chatbot.prompt import exception_prompt, intent_prompt, rewrite_prompt, rag_prompt, \
                                         keyword_prompt, chat_summary_prompt, trend_prompt
 from agents.main_chatbot.prompt import similar_analysis_prompt, career_recommend_prompt, \
-                                       tech_extraction_prompt, future_search_prompt, future_job_prompt,integration_prompt,\
+                                       tech_extraction_prompt, future_search_prompt, future_job_prompt,integration_prompt\
                                        internal_expert_mento_prompt, search_keyword_prompt, external_expert_mento_prompt
 from agents.main_chatbot.developstate import DevelopState
 from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE, role, skill_set, domain, job
@@ -13,11 +13,22 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
 from langchain_openai import ChatOpenAI
 from vector_store.chroma_search import find_best_match, get_topN_info, get_topN_emp
+
 from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords, format_search_results, tavily_search_for_keywords, trend_search
 from agents.tools.tavily_search import search_tavily
 from agents.tools.lecture_search import lecture_recommend
 import json, asyncio
 
+
+# pydantic error -> 반복 실행 횟수 설정
+def limited_retry_chain(chain, input_data: dict, max_retries: int = 2):
+    for attempt in range(1, max_retries + 1):
+        try:
+            return chain.invoke(input_data)
+        except Exception as e:
+            print(f"⚠️ Retry {attempt} failed: {e}")
+            if attempt == max_retries:
+                raise
 
 # pydantic error -> 반복 실행 횟수 설정
 def limited_retry_chain(chain, input_data: dict, max_retries: int = 2):
@@ -199,6 +210,8 @@ def path(state: DevelopState) -> DevelopState:
                                 ensure_ascii=False))]
             }
     
+
+
 ### role_model 생성 관련 노드 (비동기)
 async def create_internal_expert(state: DevelopState) -> DevelopState:
     """사내 전문가 멘토 생성"""
@@ -351,7 +364,7 @@ async def create_external_expert(state: DevelopState) -> DevelopState:
     except Exception as e:
         print(f"❌ 외부 전문가 멘토 생성 실패: {e}")
         return None
-    
+
 async def role_model(state: DevelopState) -> DevelopState:
     """
     롤모델 그룹 생성 (비동기 병렬 처리)
@@ -433,7 +446,6 @@ async def role_model(state: DevelopState) -> DevelopState:
 """
         else:
             summary_text = "❌ 멘토 그룹 생성에 실패했습니다."
-
     except Exception as e:
         print(f"❌ 롤모델 생성 중 전체 오류 발생: {e}")
         return {**state, 'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
@@ -445,6 +457,94 @@ async def role_model(state: DevelopState) -> DevelopState:
         },
         'messages': AIMessage(summary_text)
     }
+
+
+# def role_model(state: DevelopState) -> DevelopState:
+#     """
+#     롤모델 그룹 생성 노드 (Pydantic 파싱 실패 시 최대 2회 재시도 포함)
+#     """
+#     try:
+#         top_n = 5
+#         info = get_topN_emp(state.get('rag_query',''), state.get('user_id',''), top_n)
+#         grouping_prompt = PromptTemplate(
+#             input_variables=["similar_employees", "user_query", "total_count", "skill_set", "job", "role", "domain"],
+#             template=role_prompt
+#         )
+#         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+#         parser = PydanticOutputParser(pydantic_object=GroupedRoleModelResult)
+#         rolemodel_chain = grouping_prompt | llm | parser
+
+#         try:
+#             structured_result = limited_retry_chain(
+#                 rolemodel_chain,
+#                 {
+#                     "similar_employees": info,
+#                     "user_query": state.get('input_query'),
+#                     "total_count": top_n,
+#                     "skill_set": skill_set,
+#                     "role": role,
+#                     "domain": domain,
+#                     "job": job
+#                 },
+#                 max_retries=2
+#             )
+#         except Exception as e:
+#             print("❌ 롤모델 재시도 실패. 기본 결과 반환.", e)
+#             structured_result = GroupedRoleModelResult()
+
+#         role_model_list = []
+#         for i, group in enumerate(structured_result.groups):
+#             role_model_dict = {
+#                 'group_id': f'group_{i+1}',
+#                 'group_name': group.group_name,
+#                 'current_position': group.role_model.current_position,
+#                 'experience_years': group.role_model.experience_years,
+#                 'main_domains': group.role_model.main_domains,
+#                 'advice_message': group.role_model.advice_message,
+#                 'common_skill_set': group.common_skill_set,
+#                 'common_career_path': group.common_career_path,
+#                 'common_project': group.common_project,
+#                 'common_experience': group.common_experience,
+#                 'common_cert': group.common_cert
+#             }
+#             role_model_list.append(role_model_dict)
+
+#         # summary_text = f"""🎯 분석 완료: {structured_result.total_employees}명의 사원 데이터를 {len(structured_result.groups)}개 그룹으로 분류
+#         summary_text = f"""🎯 분석 완료\n
+
+# 📋 생성된 롤모델 그룹:
+# {chr(10).join([f"• {group.group_name}: {group.role_model.name} ({group.member_count}명)" for group in structured_result.groups])}
+
+# 💡 {structured_result.analysis_summary}
+
+# 📊 상세 롤모델 정보:
+# {chr(10).join([
+#     f"▶ {model['group_name']} (ID: {model['group_id']})" + chr(10) +
+#     f"  • 현재 직책: {model['current_position']}" + chr(10) +
+#     f"  • 경력: {model['experience_years']}" + chr(10) +
+#     f"  • 주요 도메인: {', '.join(model['main_domains'])}" + chr(10) +
+#     f"  • 조언: {model['advice_message']}" + chr(10) +
+#     f"  • 공통 기술 스택: {', '.join(model['common_skill_set'])}" + chr(10) +
+#     f"  • 공통 경력 증진 패턴: {', '.join(model['common_career_path'])}" + chr(10) +
+#     f"  • 공통 프로젝트: {', '.join(model['common_project'])}" + chr(10) +
+#     f"  • 공통 경험: {', '.join(model['common_experience'])}" + chr(10) +
+#     f"  • 공통 자격증: {', '.join(model['common_cert'])}" + chr(10)
+#     for model in role_model_list
+# ])}
+# """
+
+#     except Exception as e:
+#         # TODO: 다른 노드 실행할 수 있도록 처리 (출력값이 없을 수는 없게)
+#         return {**state,
+#                 'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
+
+#     return {**state,
+#             'result': {
+#                 'rolemodels': role_model_list,
+#             },
+#             'messages': AIMessage(summary_text)
+#         }
+  
 
 async def trend(state: DevelopState) -> DevelopState:
     """

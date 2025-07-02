@@ -5,23 +5,38 @@ import os
 def get_career_summary(member_id: str):
     if not member_id.isdigit():
         return "None"
-    # PostgreSQL 연결
-    conn = psycopg2.connect(os.getenv("POSTGRES_URL"))
-    # 커서 생성
-    cur = conn.cursor()
-    # 예시 쿼리 실행
-    cur.execute("""
-        SELECT career_summary
-        FROM public.profile
-        WHERE member_id = %s;
-    """, (member_id,))
-    result = cur.fetchone()
-    # 연결 종료
-    cur.close()
-    conn.close()
-    if result is None:
+    
+    conn = None
+    cur = None
+    try:
+        # PostgreSQL 연결 시도
+        conn = psycopg2.connect(os.getenv("POSTGRES_URL"))
+        cur = conn.cursor()
+        
+        # 쿼리 실행
+        cur.execute("""
+            SELECT career_summary
+            FROM public.profile
+            WHERE member_id = %s;
+        """, (member_id,))
+        result = cur.fetchone()
+
+        if result is None:
+            return "None"
+        return result[0]
+
+    except psycopg2.OperationalError as e:
+        print(f"❌ PostgreSQL 연결 실패: {e}")
         return "None"
-    return result[0]
+    except Exception as e:
+        print(f"❌ 예외 발생: {e}")
+        return "None"
+    finally:
+        # 커서 및 연결 안전하게 닫기
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 
 def get_company_direction():
     # PostgreSQL 연결
