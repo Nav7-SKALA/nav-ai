@@ -1,27 +1,27 @@
 import os
+from typing import Dict
+from dotenv import load_dotenv
+from sentence_transformers import SentenceTransformer
+
 from langchain.tools import tool
 from langchain_community.vectorstores import Chroma
-import chromadb
-from sentence_transformers import SentenceTransformer
-import numpy as np
-from dotenv import load_dotenv
-import config  # 이렇게만 하면 자동으로 경로 설정됨
-from vector_store.chroma_client import get_chroma_client
-load_dotenv()
-from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE
-from typing import Dict
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
+
+import chromadb
+import numpy as np
+import config
+from vector_store.chroma_client import get_chroma_client
+from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE
 from agents.main_chatbot.prompt import lecture_prompt
 from agents.main_chatbot.response import LectureRecommendation
 
+load_dotenv()
+
+
 class EmbeddingModel:
-    def __init__(self): # .env에서 모델 이름 가져오도록
-        """한국어 임베딩 모델 초기화
-        
-        Args:
-            model_name (str): 사용할 임베딩 모델 이름
-        """
+    def __init__(self):
+        """한국어 임베딩 모델 초기화"""
         self.model_name = os.getenv("EMBEDDING_MODEL_NAME")
         self.model = SentenceTransformer(self.model_name)
     
@@ -32,7 +32,6 @@ class EmbeddingModel:
 
 def lecture_search(query: str) -> str:
     """vectorDB에서 정보 검색 도구"""
-    
     client = get_chroma_client()
     collection_name = os.getenv("LEC_COLLECTION_NAME")
     collection = client.get_or_create_collection(collection_name)
@@ -42,26 +41,29 @@ def lecture_search(query: str) -> str:
 
     TOP_N = 3
     results = collection.query(
-        query_embeddings=[query_embedding],  # 리스트 안에 1개의 벡터
-        n_results=TOP_N,                         # 상위 5개 반환
+        query_embeddings=[query_embedding],
+        n_results=TOP_N,
         include=["documents", "metadatas", "distances"]
     )
 
     return {"search_lectures": results}
 
+
 async def lecture_recommend(user_query: str, career_summary: str = "") -> Dict:
-    """
-    사내 교육 추천 Tool 함수
-    """
+    """사내 교육 추천 Tool 함수"""
     try:
         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
         
         # 강의 검색
         lecture_results = lecture_search(user_query)    
+
+        print("이건 강의정보 확인!!!!")
+        print(lecture_results)
+        print("*"*60)
         
         # 프롬프트 템플릿
         lecture_recommend_template = PromptTemplate(
-            input_variables=["user_query", "available_courses","career_summary"],
+            input_variables=["user_query", "available_courses", "career_summary"],
             template=lecture_prompt
         )
         
@@ -73,8 +75,15 @@ async def lecture_recommend(user_query: str, career_summary: str = "") -> Dict:
             "career_summary": career_summary
         })
 
+        selected_lecture_name = result.internal_course
+        full_lecture_info = find_full_lecture_info(lecture_results, selected_lecture_name)
+        print(""*60)
+        print("이건 최종적으로 뽑힌 1개의 강의 정보 확인!!!")
+        print(full_lecture_info)
+        print("*"*60)
+
         return {
-            'internal_course': result.internal_course,
+            'internal_course': full_lecture_info,
             'ax_college': result.ax_college,
             'explanation': result.explanation
         }
@@ -86,120 +95,24 @@ async def lecture_recommend(user_query: str, career_summary: str = "") -> Dict:
             'ax_college': "",
             'explanation': ""
         }
-
-if __name__ == "__main__":
-    # 테스트 쿼리
-    test_query = "['AI', 'development', 'trends']"
-    print(lecture_search(test_query))
-
-
-
-# class VectorDBSearcher:
-#     def __init__(self, persist_directory=vector_db_dir, embedding_model=None):
-#         """벡터 DB 검색기 초기화
-        
-#         Args:
-#             persist_directory (str): ChromaDB 저장 디렉토리 경로
-#             embedding_model: 임베딩 모델 객체
-#         """
-#         self.persist_directory = persist_directory
-#         self.embedding_model = embedding_model or KoreanEmbeddingModel()
-        
-#         # 벡터 DB 디렉토리가 존재하는지 확인
-#         if not os.path.exists(persist_directory):
-#             os.makedirs(persist_directory, exist_ok=True)
-#             print(f"경고: {persist_directory} 디렉토리가 존재하지 않아 새로 생성했습니다.")
-#             print("벡터 DB를 먼저 구축해야 검색이 가능합니다.")
-#             self.vectordb = None
-#         else:
-#             try:
-#                 # 커스텀 임베딩 함수 정의
-#                 embedding_function = lambda texts: self.embedding_model.model.encode(texts)
-                
-#                 # ChromaDB 로드
-#                 self.vectordb = Chroma(
-#                     persist_directory=persist_directory,
-#                     embedding_function=embedding_function
-#                 )
-#             except Exception as e:
-#                 print(f"벡터 DB 로드 중 오류 발생: {e}")
-#                 self.vectordb = None
     
-#     def search_by_similarity(self, query, top_k=5):
-#         """쿼리와 유사한 상위 k개 문서 검색
+def find_full_lecture_info(lecture_results, selected_lecture_name):
+    """LLM이 선택한 강의명으로 전체 정보 찾기"""
+    try:
+        lectures_data = lecture_results["search_lectures"]
+        documents = lectures_data.get("documents", [[]])[0]
+        metadatas = lectures_data.get("metadatas", [[]])[0]
         
-#         Args:
-#             query (str): 검색 쿼리
-#             top_k (int): 반환할 결과 개수
-            
-#         Returns:
-#             list: 검색 결과 리스트 (각 항목은 문서 내용과 메타데이터 포함)
-#         """
-#         if self.vectordb is None:
-#             return {"error": "벡터 DB가 초기화되지 않았습니다."}
+        # 선택된 강의명과 일치하는 강의 찾기
+        for doc, meta in zip(documents, metadatas):
+            if selected_lecture_name in meta.get('강의명', ''):
+                return doc, meta.get('교육유형', '')
         
-#         # 쿼리 임베딩
-#         query_embedding = self.embedding_model.embed_query(query)
+        # 일치하는 강의가 없으면 첫 번째 강의 반환
+        if documents:
+            return documents[0]  # 첫 번째 원본 데이터 그대로
         
-#         # 유사도 검색 수행
-#         results = self.vectordb.similarity_search_by_vector(
-#             embedding=query_embedding,
-#             k=top_k
-#         )
+        return "강의 정보를 찾을 수 없습니다."
         
-#         # 결과 포맷팅
-#         formatted_results = []
-#         for i, doc in enumerate(results):
-#             formatted_results.append({
-#                 "rank": i + 1,
-#                 "content": doc.page_content,
-#                 "metadata": doc.metadata,
-#                 "score": None  # ChromaDB는 기본적으로 점수를 반환하지 않음
-#             })
-        
-#         return formatted_results
-
-
-# # LangChain 도구로 등록
-# @tool("search_vector_db", return_direct=True)
-# def search_vector_db(query: str, top_k: int = 5, persist_directory: str = vector_db_dir):
-#     """쿼리와 유사한 상위 k개 문서를 벡터 DB에서 검색합니다.
-    
-#     Args:
-#         query (str): 검색할 쿼리 텍스트
-#         top_k (int): 반환할 결과 개수 (기본값: 5)
-#         persist_directory (str): 벡터 DB 저장 경로 (기본값: ./vector_store)
-        
-#     Returns:
-#         list: 검색 결과 리스트
-#     """
-#     # 임베딩 모델 초기화
-#     embedding_model = KoreanEmbeddingModel()
-    
-#     # 벡터 DB 검색기 초기화
-#     searcher = VectorDBSearcher(
-#         persist_directory=persist_directory,
-#         embedding_model=embedding_model
-#     )
-    
-#     # 검색 수행
-#     results = searcher.search_by_similarity(query, top_k=top_k)
-    
-#     return results
-
-
-# 사용 예시
-# if __name__ == "__main__":
-#     # 테스트 쿼리
-#     test_query = "React와 Node.js 경험이 있는 개발자"
-    
-#     # 검색 수행
-#     results = search_vector_db(test_query)
-    
-#     # 결과 출력
-#     print(f"쿼리: {test_query}")
-#     print(f"검색 결과 ({len(results)}개):")
-#     for result in results:
-#         print(f"순위 {result['rank']}: {result['content'][:100]}...")
-#         print(f"메타데이터: {result['metadata']}")
-#         print("-" * 50)
+    except Exception as e:
+        return f"강의 정보 추출 오류: {str(e)}"
