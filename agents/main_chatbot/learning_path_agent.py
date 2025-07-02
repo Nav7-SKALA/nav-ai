@@ -16,6 +16,7 @@ from tools.search_coursera_courses import search_coursera_courses
 # from tools.vector_search_tool import lecture_search
 from tools.tavily_search_tool import search_conferences, search_certifications
 from tools.google_news_tool import google_news_search
+from agents.tools.lecture_search import lecture_search
 # 환경변수 로드
 load_dotenv()
 
@@ -29,7 +30,8 @@ llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
 
 # Tools 리스트
 # tools = [lecture_search,search_coursera_courses,search_conferences,search_certifications,google_news_search]
-tools = [search_coursera_courses,search_conferences,search_certifications,google_news_search]
+# tools = [search_coursera_courses,search_conferences,search_certifications,google_news_search]
+tools = [lecture_search]
 
 # Agent 프롬프트 생성
 prompt = ChatPromptTemplate.from_messages([

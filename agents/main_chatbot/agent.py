@@ -1,7 +1,7 @@
 from agents.main_chatbot.prompt import exception_prompt, intent_prompt, rewrite_prompt, rag_prompt, \
-                                        role_prompt, keyword_prompt, chat_summary_prompt, trend_prompt
+                                        role_prompt, keyword_prompt, chat_summary_prompt
 from agents.main_chatbot.prompt import similar_analysis_prompt, career_recommend_prompt, \
-                                       tech_extraction_prompt, future_search_prompt, future_job_prompt
+                                       tech_extraction_prompt, future_search_prompt, future_job_prompt, integration_prompt
 from agents.main_chatbot.developstate import DevelopState
 from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE, role, skill_set, domain, job
 from agents.main_chatbot.response import PromptWrite, PathRecommendResult, GroupedRoleModelResult, SimilarRoadMapResult
@@ -12,8 +12,9 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from vector_store.chroma_search import find_best_match, get_topN_info, get_topN_emp
-from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords, format_search_results
-import json
+from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords, format_search_results,trend_search
+from agents.tools.lecture_search import lecture_recommend
+import json, asyncio
 
 
 def exception(state: DevelopState) -> DevelopState:    
@@ -241,32 +242,129 @@ def role_model(state: DevelopState) -> DevelopState:
     except Exception as e:
         return {**state, 'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
     
-async def trend(state: DevelopState) -> DevelopState:
-    llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+# async def trend_search(state: DevelopState) -> DevelopState:
+#     llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
 
-    # 키워드 추출
-    keyword_prompttamplate = PromptTemplate(input_variables=["messages"],
-                                            template=keyword_prompt
-                                            )
-    keyword_llm_chain = keyword_prompttamplate | llm
-    keywords = parse_keywords(
-                (keyword_llm_chain.invoke({"messages": state.get('input_query')})).content
-                )
-    trend_keyword = await trend_analysis_for_keywords(keywords)
+#     # 키워드 추출
+#     keyword_prompttamplate = PromptTemplate(input_variables=["messages"],
+#                                             template=keyword_prompt
+#                                             )
+#     keyword_llm_chain = keyword_prompttamplate | llm
+#     keywords = parse_keywords(
+#                 (keyword_llm_chain.invoke({"messages": state.get('input_query')})).content
+#                 )
+#     # print("***키워드 확인해보자: ", keywords)
+#     trend_keyword = await trend_analysis_for_keywords(keywords)
 
-    # 기술 검색 결과 분석
-    trend_prompttamplate = PromptTemplate(input_variables=["messages", "keyword_result"],
-                                          template=trend_prompt
-                                          )
-    trend_llm_chain = trend_prompttamplate | llm
-    result = trend_llm_chain.invoke({
-                    "messages": state.get('input_query'),
-                    "keyword_result": trend_keyword,
-                })
+#     # 기술 검색 결과 분석
+#     trend_prompttamplate = PromptTemplate(input_variables=["messages", "keyword_result"],
+#                                           template=trend_prompt
+#                                           )
+#     trend_llm_chain = trend_prompttamplate | llm
+#     result = trend_llm_chain.invoke({
+#                     "messages": state.get('input_query'),
+#                     "keyword_result": trend_keyword,
+#                 })
     
-    return {**state,
-            'result': {'text': result.content},
-            'messages': AIMessage(result.content)}
+#     return {**state,
+#             'result': {'text': result.content},
+#             'messages': AIMessage(result.content)}
+
+# async def lecture_recommend(state: DevelopState) -> DevelopState:
+#     """
+#     사내 교육 추천 노드
+#     """
+#     try:
+#         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+#         user_query = state.get('input_query')
+        
+#         # 강의 검색 (수정: await 제거하고 동기 함수로 호출)
+#         lecture_results = lecture_search(user_query)
+        
+#         # 프롬프트 템플릿 정의 (lecture_prompt가 정의되어 있다고 가정)
+#         lecture_recommend_template = PromptTemplate(
+#             input_variables=["user_query", "lecture_results"],
+#             template=lecture_prompt  # 이 변수가 정의되어 있어야 함
+#         )
+        
+#         # LLM 체인 구성 및 실행 (수정)
+#         lecture_llm_chain = lecture_recommend_template | llm
+#         result = lecture_llm_chain.invoke({
+#             "user_query": user_query,
+#             "lecture_results": lecture_results
+#         })
+        
+#         # 결과 반환 (DevelopState 형태 유지)
+#         return {
+#             **state,
+#             'result': {'text': result.content},
+#             'messages': AIMessage(result.content)
+#         }
+        
+#     except Exception as e:
+#         # 오류 처리
+#         return {
+#             **state,
+#             'result': {'text': f"강의 추천 중 오류 발생: {str(e)}"},
+#             'messages': AIMessage(f"강의 추천 중 오류 발생: {str(e)}")
+#         }
+
+async def trend(state: DevelopState) -> DevelopState:
+    """
+    기술 트렌드 검색과 사내 교육 추천을 통합하는 최종 함수
+    """
+    try:
+        llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+        user_query = state.get('input_query')
+        career_summary = state.get("career_summary")
+
+        
+        # 1. 병렬로 기술 트렌드 검색과 사내 교육 추천 실행
+        trend_analysis, lecture_recommendation = await asyncio.gather(
+            trend_search(user_query),             
+            lecture_recommend(user_query,career_summary)     
+        )
+        print("결과 확인하기")
+        print("trend_search: ",trend_analysis)
+        print("*"*60)
+        print("lecture_recommend: ",lecture_recommendation)
+        print("*"*60)
+
+        trend_result = trend_analysis.get('trend_result', '')
+        internal_course = lecture_recommendation.get('internal_course', '')
+        ax_college = lecture_recommendation.get('ax_college', '')
+        explanation = lecture_recommendation.get('explanation', '')
+        
+        # 4. 통합 분석 실행
+        integration_template = PromptTemplate(
+            input_variables=["career_summary", "trend_result", "internal_course","ax_college", "explanation"],
+            template=integration_prompt
+        )
+        
+        integration_chain = integration_template | llm
+        final_result = integration_chain.invoke({
+            "career_summary": state.get("career_summary"),
+            "trend_result": trend_result,
+            "internal_course": internal_course,
+            "ax_college": ax_college,
+            "explanation": explanation
+        })
+        
+        # 5. 최종 결과 반환 (기존 구조 유지)
+        return {
+            **state,
+            'result': {'text': final_result.content},
+            'messages': AIMessage(final_result.content)
+        }
+        
+    except Exception as e:
+        # 오류 처리
+        error_message = f"통합 분석 중 오류 발생: {str(e)}"
+        return {
+            **state,
+            'result': {'text': error_message},
+            'messages': AIMessage(error_message)
+        }
 
 
 async def future_career_recommend(state: DevelopState) -> DevelopState:

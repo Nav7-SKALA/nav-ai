@@ -4,12 +4,16 @@ from langchain_community.vectorstores import Chroma
 import chromadb
 from sentence_transformers import SentenceTransformer
 import numpy as np
-import asyncio # asyncio 임포트
-
 from dotenv import load_dotenv
+import config  # 이렇게만 하면 자동으로 경로 설정됨
+from vector_store.chroma_client import get_chroma_client
 load_dotenv()
-
-vector_db_dir = os.getenv("VECTOR_DB_DIR")
+from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE
+from typing import Dict
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+from agents.main_chatbot.prompt import lecture_prompt
+from agents.main_chatbot.response import LectureRecommendation
 
 class EmbeddingModel:
     def __init__(self): # .env에서 모델 이름 가져오도록
@@ -26,20 +30,17 @@ class EmbeddingModel:
         return self.model.encode(query).tolist()
 
 
-@tool
 def lecture_search(query: str) -> str:
     """vectorDB에서 정보 검색 도구"""
     
-    chromDB_path = os.getenv("VECTOR_DB_DIR")
+    client = get_chroma_client()
     collection_name = os.getenv("LEC_COLLECTION_NAME")
-    
-    client = chromadb.PersistentClient(path=chromDB_path)
     collection = client.get_or_create_collection(collection_name)
     
     embed = EmbeddingModel()
     query_embedding = embed.embed_query(query) 
 
-    TOP_N = 5
+    TOP_N = 3
     results = collection.query(
         query_embeddings=[query_embedding],  # 리스트 안에 1개의 벡터
         n_results=TOP_N,                         # 상위 5개 반환
@@ -48,10 +49,47 @@ def lecture_search(query: str) -> str:
 
     return {"search_lectures": results}
 
+async def lecture_recommend(user_query: str, career_summary: str = "") -> Dict:
+    """
+    사내 교육 추천 Tool 함수
+    """
+    try:
+        llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+        
+        # 강의 검색
+        lecture_results = lecture_search(user_query)    
+        
+        # 프롬프트 템플릿
+        lecture_recommend_template = PromptTemplate(
+            input_variables=["user_query", "available_courses","career_summary"],
+            template=lecture_prompt
+        )
+        
+        # LLM 실행
+        lecture_llm_chain = lecture_recommend_template | llm.with_structured_output(LectureRecommendation)
+        result = lecture_llm_chain.invoke({
+            "user_query": user_query,
+            "available_courses": lecture_results,
+            "career_summary": career_summary
+        })
+
+        return {
+            'internal_course': result.internal_course,
+            'ax_college': result.ax_college,
+            'explanation': result.explanation
+        }
+        
+    except Exception as e:
+        return {
+            'lecture_results': f"사내 교육 추천 중 오류 발생: {str(e)}",
+            'internal_course': "",
+            'ax_college': "",
+            'explanation': ""
+        }
 
 if __name__ == "__main__":
     # 테스트 쿼리
-    test_query = "생성형 AI 관련 강의"
+    test_query = "['AI', 'development', 'trends']"
     print(lecture_search(test_query))
 
 

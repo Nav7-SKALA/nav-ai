@@ -24,3 +24,4 @@ __pycache__/
 # test
 test/
 test.py
+test_trend.py

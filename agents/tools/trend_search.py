@@ -3,6 +3,12 @@ from typing import List, Dict
 from agents.tools.tavily_search import search_tavily
 from agents.tools.reddit_search import search_reddit
 from agents.tools.github_search import search_github
+from agents.main_chatbot.prompt import keyword_prompt,trend_prompt
+
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+
+from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE
 
 async def search_all_sources(keyword: str) -> Dict[str, List[str]]:
     github, reddit, tavily = await asyncio.gather(
@@ -94,3 +100,30 @@ def format_tavily_data(tavily_data: List[str]) -> str:
     
     return "\n".join(formatted)
 
+async def trend_search(user_query:str) -> Dict:
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+
+    # 키워드 추출
+    keyword_prompttamplate = PromptTemplate(input_variables=["messages"],
+                                            template=keyword_prompt
+                                            )
+    keyword_llm_chain = keyword_prompttamplate | llm
+    keywords = parse_keywords(
+                (keyword_llm_chain.invoke({"messages": user_query})).content
+                )
+    # print("***키워드 확인해보자: ", keywords)
+    trend_keyword = await trend_analysis_for_keywords(keywords)
+
+    # 기술 검색 결과 분석
+    trend_prompttamplate = PromptTemplate(input_variables=["messages", "keyword_result"],
+                                          template=trend_prompt
+                                          )
+    trend_llm_chain = trend_prompttamplate | llm
+    result = trend_llm_chain.invoke({
+                    "messages": user_query,
+                    "keyword_result": trend_keyword,
+                })
+    
+    return {
+            'trend_result': result.content
+            }

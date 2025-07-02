@@ -58,3 +58,8 @@ class GroupedRoleModelResult(BaseModel):
     analysis_summary: str = Field(description="전체 분석 요약")
     total_employees: int = Field(description="분석한 총 사원 수")
     groups: List[RoleModelGroup] = Field(description="생성된 롤모델 그룹들 (2-4개)")
+
+class LectureRecommendation(BaseModel):
+    internal_course: str
+    ax_college: str
+    explanation: str

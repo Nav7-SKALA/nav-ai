@@ -5,7 +5,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 AGENT_ROOT = os.path.join(BASE_DIR, "agents")
 AGENT_DIR = {'main_chatbot': os.path.join(AGENT_ROOT, "main_chatbot"),
-             'persona_chat': os.path.join(AGENT_ROOT, "persona_chat"),
+             'mentor_chat': os.path.join(AGENT_ROOT, "mentor_chat"),
              'summary': os.path.join(AGENT_ROOT, "summary"),
             }
 # Vector Store 경로 추가

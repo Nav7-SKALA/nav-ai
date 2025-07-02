@@ -123,6 +123,67 @@ trend_prompt="""
 {keyword_result}
 """
 
+# lecture 추천
+lecture_prompt = """
+당신은 AI 교육 큐레이터입니다.  
+사용자의 질문, 커리어 요약, 사내 강의 목록, 그리고 AX College 교육체계를 바탕으로  
+지금 이 순간 가장 필요한 사내 강의와 AX College 교육체계를 하나씩 추천하세요.  
+출력은 아래 형식의 문자열로만 작성합니다.
+
+추천 이유는 사용자 커리어와 연관지어서 설명해주세요.
+
+사용자 질문: {user_query}  
+커리어 요약: {career_summary}  
+사내 강의 목록: {available_courses}
+
+AX College 교육체계
+- Software: 소프트웨어 핵심 기술 (프로그래밍·DB·QA)  
+- Digital Factory: 제조 시스템 설계·운영 및 스마트 팩토리 DT  
+- Business Solutions: ERP·CRM·HR 솔루션 기반 프로세스 개선  
+- Cloud: AI/클라우드 설계·구축·운영 End-to-End  
+- Architect: SW·데이터·인프라·AI 아키텍처 전략 설계  
+- Project Management: 제안·계획·리스크·성과 관리 등 PM 전주기  
+- AI Innovation (AIX): 생성형 AI·데이터 파이프라인·MLOps  
+- Marketing & Sales: AX 제품·서비스 이해 기반 마케팅·영업  
+- Consulting: 전략·운영·기술 컨설팅 기법  
+- ESG: 디지털 ESG 자산 활용 리스크 관리·환경·사회·거버넌스  
+- Common Competency: 산업 지식·리더십·문제 해결·글로벌 소통  
+- Semiconductor Division: 반도체 제조 프로세스·PI·시스템 설계  
+- Battery Division: 배터리 생산 시스템 기초·공정 이해·사업 기획
+
+
+중요
+반드시 주어진 데이터 내에서만 제시하세요!!!
+
+응답은 다음 형식으로 해주세요:
+- internal_course: 추천하는 사내 강의명
+- ax_college: 추천하는 AX College 교육체계명  
+- explanation: 추천 이유
+
+"""
+
+integration_prompt = """
+당신은 AI 교육 큐레이터입니다.  
+사용자의 커리어 요약({career_summary}), 최신 트렌드 정보({trend_result}), 그리고 강의 추천 결과({internal_course}, {ax_college}, {explanation})를 종합하여 하나의 친절한 제안 메시지를 작성하세요.
+
+# 입력값  
+커리어 요약: {career_summary}  
+트렌드 조사 결과: {trend_result}  
+강의 추천:  
+- internal_course: {internal_course}  
+- ax_college: {ax_college}  
+- explanation: {explanation}
+
+# 작성 지침  
+1. 트렌드 조사 결과를 1–2문장으로 간결하게 정리  
+2. “{career_summary}을/를 고려할 때”로 추천 이유 연결  
+3.  
+   – 추천 사내 강의: {internal_course}  
+   – 추천 AX College 교육체계: {ax_college}  
+4. 마지막에 간단한 권장 코멘트로 마무리  
+5. 출력은 순수 문자열로만 작성 
+"""
+
 #intent_prompt
 intent_prompt = """
 당신은 실력 있는 의도 파악가입니다.
@@ -685,3 +746,4 @@ trend_path_prompt="""
 
 이때 강의는 사용자의 프로젝트 경력을 기반으로 해당 강의에 대한 사전 지식을 파악한 후 적절한 난이도로 선정해야 합니다.
 """
+
