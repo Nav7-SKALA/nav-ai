@@ -561,11 +561,6 @@ async def trend(state: DevelopState) -> DevelopState:
             trend_search(user_query),             
             lecture_recommend(user_query,career_summary)     
         )
-        print("결과 확인하기")
-        print("trend_search: ",trend_analysis)
-        print("*"*60)
-        print("lecture_recommend: ",lecture_recommendation)
-        print("*"*60)
 
         trend_result = trend_analysis.get('trend_result', '')
         internal_course = lecture_recommendation.get('internal_course', '')
