@@ -78,9 +78,9 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
         session_data = get_session_data(session_id)
         conversation_history = session_data["summary"] 
         
-        print("=====이전 대화 기록 확인해보자=====")
-        print(conversation_history)
-        print("=================================")
+        # print("=====이전 대화 기록 확인해보자=====")
+        # print(conversation_history)
+        # print("=================================")
     
 
         # 프롬프트 설정
