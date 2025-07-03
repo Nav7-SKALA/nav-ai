@@ -1,20 +1,35 @@
 from agents.main_chatbot.prompt import exception_prompt, intent_prompt, rewrite_prompt, rag_prompt, \
                                         keyword_prompt, chat_summary_prompt, trend_prompt
 from agents.main_chatbot.prompt import similar_analysis_prompt, career_recommend_prompt, \
-                                       tech_extraction_prompt, future_search_prompt, future_job_prompt,\
+                                       tech_extraction_prompt, future_search_prompt, future_job_prompt,integration_prompt,\
                                        internal_expert_mento_prompt, search_keyword_prompt, external_expert_mento_prompt
 from agents.main_chatbot.developstate import DevelopState
 from agents.main_chatbot.config import MODEL_NAME, TEMPERATURE, role, skill_set, domain, job
-from agents.main_chatbot.response import PromptWrite, PathRecommendResult, RoleModelGroup, GroupedRoleModelResult, SimilarRoadMapResult
+from agents.main_chatbot.response import PromptWrite, PathRecommendResult, RoleModelGroup, GroupedRoleModelResult, SimilarRoadMapResult,TrendResult
 from db.postgres import get_company_direction
 
 from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
 from langchain_openai import ChatOpenAI
+
 from vector_store.chroma_search import find_best_match, get_topN_info
-from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords, format_search_results, tavily_search_for_keywords
-import json
+from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords, format_search_results, tavily_search_for_keywords, trend_search
+from agents.tools.tavily_search import search_tavily
+from agents.tools.lecture_search import lecture_recommend
+import json, asyncio
+
+
+# pydantic error -> 반복 실행 횟수 설정
+def limited_retry_chain(chain, input_data: dict, max_retries: int = 2):
+    for attempt in range(1, max_retries + 1):
+        try:
+            return chain.invoke(input_data)
+        except Exception as e:
+            print(f"⚠️ Retry {attempt} failed: {e}")
+            if attempt == max_retries:
+                raise
+
 
 # pydantic error -> 반복 실행 횟수 설정
 def limited_retry_chain(chain, input_data: dict, max_retries: int = 2):
@@ -243,7 +258,7 @@ async def create_internal_expert(state: DevelopState) -> DevelopState:
     except Exception as e:
         print(f"❌ 사내 전문가 멘토 생성 실패: {e}")
         return None
-    
+
 async def create_internal_similar(state: DevelopState) -> DevelopState:
     """사내 유사 경력 멘토 생성"""
     try:
@@ -355,8 +370,6 @@ async def create_external_expert(state: DevelopState) -> DevelopState:
         print(f"❌ 외부 전문가 멘토 생성 실패: {e}")
         return None
 
-import asyncio
-
 async def role_model(state: DevelopState) -> DevelopState:
     """
     롤모델 그룹 생성 (비동기 병렬 처리)
@@ -438,7 +451,6 @@ async def role_model(state: DevelopState) -> DevelopState:
 """
         else:
             summary_text = "❌ 멘토 그룹 생성에 실패했습니다."
-
     except Exception as e:
         print(f"❌ 롤모델 생성 중 전체 오류 발생: {e}")
         return {**state, 'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
@@ -540,32 +552,60 @@ async def role_model(state: DevelopState) -> DevelopState:
   
 
 async def trend(state: DevelopState) -> DevelopState:
-    llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+    """
+    기술 트렌드 검색과 사내 교육 추천을 통합하는 최종 함수
+    """
+    try:
+        llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+        user_query = state.get('input_query')
+        career_summary = state.get("career_summary")
 
-    # 키워드 추출
-    keyword_prompttamplate = PromptTemplate(input_variables=["messages"],
-                                            template=keyword_prompt
-                                            )
-    keyword_llm_chain = keyword_prompttamplate | llm
-    keywords = parse_keywords(
-                (keyword_llm_chain.invoke({"messages": state.get('input_query')})).content
-                )
-    trend_keyword = await trend_analysis_for_keywords(keywords)
+        
+        # 1. 병렬로 기술 트렌드 검색과 사내 교육 추천 실행
+        trend_analysis, lecture_recommendation = await asyncio.gather(
+            trend_search(user_query),             
+            lecture_recommend(user_query,career_summary)     
+        )
 
-    # 기술 검색 결과 분석
-    trend_prompttamplate = PromptTemplate(input_variables=["messages", "keyword_result"],
-                                          template=trend_prompt
-                                          )
-    trend_llm_chain = trend_prompttamplate | llm
-    result = trend_llm_chain.invoke({
-                    "messages": state.get('input_query'),
-                    "keyword_result": trend_keyword,
-                })
+        trend_result = trend_analysis.get('trend_result', '')
+        internal_course = lecture_recommendation.get('internal_course', '')
+        ax_college = lecture_recommendation.get('ax_college', '')
+        explanation = lecture_recommendation.get('explanation', '')
+        
+        # 4. 통합 분석 실행
+        integration_template = PromptTemplate(
+            input_variables=["career_summary", "trend_result", "internal_course","ax_college", "explanation"],
+            template=integration_prompt
+        )
+        
+        integration_chain = integration_template | llm
+        final_result = integration_chain.invoke({
+            "career_summary": state.get("career_summary"),
+            "trend_result": trend_result,
+            "internal_course": internal_course,
+            "ax_college": ax_college,
+            "explanation": explanation
+        })
+        
+        return {
+            **state,
+            'result': {'text': final_result.content,
+                       'ax_college': ax_college},
+            'messages': AIMessage(final_result.content)
+        }
+        
+        
+    except Exception as e:
+        # 오류 처리
+        error_message = f"통합 분석 중 오류 발생: {str(e)}"
+        return {
+            **state,
+            'result': {'text': error_message,
+                       'ax_college': error_message},
+            'messages': AIMessage(error_message)
+        }
+
     
-    return {**state,
-            'result': {'text': result.content},
-            'messages': AIMessage(result.content)}
-
 
 # async def future_career_recommend(state: DevelopState) -> DevelopState:
 #     """

@@ -34,7 +34,8 @@ pipeline {
                         def FINAL_IMAGE_TAG = "${IMAGE_TAG}-${BUILD_NUMBER}-${hashcode}"
                         echo "Final Image Tag: ${FINAL_IMAGE_TAG}"
                         docker.withRegistry("https://${IMAGE_REGISTRY}", "${DOCKER_CREDENTIAL_ID}") {
-                            def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${FINAL_IMAGE_TAG}", "--platform linux/amd64 .")
+                            // def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${FINAL_IMAGE_TAG}", "--platform linux/amd64 .")
+                            def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${FINAL_IMAGE_TAG}", "--no-cache --platform linux/amd64 .")
                             appImage.push()
                         }
                         // 최종 이미지 태그를 env에 등록 (나중에 deploy.yaml 수정에 사용)

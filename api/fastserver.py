@@ -10,6 +10,7 @@ from config import BASE_DIR, AGENT_ROOT, AGENT_DIR, VECTOR_STORE_ROOT
 sys.path.append(BASE_DIR)
 sys.path.append(AGENT_ROOT)
 sys.path.append(AGENT_DIR["main_chatbot"])
+sys.path.append(AGENT_DIR["mentor_chat"])
 sys.path.append(VECTOR_STORE_ROOT)
 
 # 경로 설정 후 import
@@ -31,6 +32,7 @@ import uvicorn
 from upsert_profile_vector import add_profile_to_vectordb
 from career_summary_agent import careerSummary_invoke
 from career_title_agent import CareerTitle_invoke
+from mentor_chat.mentor_chat_agent import chat_with_mentor, create_chat_session
 
 app = FastAPI(
     docs_url="/apis/docs",
@@ -143,6 +145,18 @@ class ProfileRequest(BaseModel):
             "experiencedAt": "2022-06"
         }
     ])
+
+class RoleModelRequest(BaseModel):
+    user_id: str = Field(..., example="testId123")
+    input_query: str = Field(..., example="백엔드 개발 전문가가 되는 과정 중에 어떤 게 가장 힘드셨나요?")
+    session_id: Optional[str] = Field(..., example="sessionID123") # mongoDB sessionID (롤모델 저장 되어 있는)
+
+class RoleModelResponse(BaseModel):
+    user_id: str
+    chat_summary: str
+    answer: str
+    success: bool
+    error: Optional[str] = None
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 2) 전역 예외 핸들러 등록
@@ -300,10 +314,6 @@ async def career_path(request: CareerPathRequest):
     #         detail=f"서버 내부 오류: {str(e)}",
     #     )
 
-@app.post("/apis/v1/rolemodel")
-def rolemodel():
-    return "rolemodel: cloud 마스터"
-
 @app.post("/apis/v1/career-summary")
 async def process_profile(request: ProfileRequest):
    """백엔드 데이터 받아서 VectorDB 저장 + Career Summary 생성"""
@@ -322,6 +332,7 @@ async def process_profile(request: ProfileRequest):
        "career_summary": summary_result["career_summary"],
        "vector_saved": vector_result
    }
+
 @app.post("/apis/v1/career-title")
 def career_title(request: ProfileRequest):
     "Career Title 생성"
@@ -336,6 +347,27 @@ def career_title(request: ProfileRequest):
        "profile_id": title_result["profile_id"],
        "career_title": title_result["career_title"],
    }
+
+@app.post("/apis/v1/rolemodel", response_model=RoleModelResponse)
+async def rolemodel_chat(request: RoleModelRequest):
+    try:
+        result = chat_with_mentor(
+            user_input=request.input_query,   # 여기를 input_query로
+            session_id=request.session_id
+        )
+        # 요청한 user_id 반영
+        result["user_id"] = request.user_id
+
+        return RoleModelResponse(**result)
+    except Exception as e:
+        return RoleModelResponse(
+            user_id=request.user_id,
+            chat_summary="",
+            answer="오류가 발생했습니다: " + str(e),
+            success=False,
+            error=str(e)
+        )
+
 
 if __name__ == "__main__":
     import argparse
