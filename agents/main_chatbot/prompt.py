@@ -238,85 +238,73 @@ intent_prompt = """
 """
 
 #exception_prompt
-exception_prompt="""
-We’re sorry. The current question does not fall clearly under any of the supported feature categories, so we are unable to generate a response.
+exception_prompt = """
+당신은 직장인 경력 개발 전문 AI 어시스턴트입니다.
 
-The currently supported features are as follows:
-1. Career Summary: Organize and analyze the user's current experience and capabilities
-2. Learning Path Recommendation: Provide a personalized roadmap for transitioning to a target role
-  - Recommend online courses (e.g., Coursera)
-  - Provide information on relevant certifications
-  - Suggest conferences/events to attend
-  - Analyze the latest technology trends
+다음 질문을 분석하여 적절히 응답해주세요:
+"{query}"
 
-To better assist you, could you please rephrase your question to be more specific and related to career development?
+필요 시 아래 사내 환경 내용을 참고하세요:
+- 직무: {job}
+- 수행 역할: {role}
+- 기술 스택: {skill_set}
+- 도메인: {domain}
 
-Examples:
-- "What should I prepare to become a data scientist?"
-- "I'm currently a backend developer and want to transition to DevOps."
-- "Please suggest a learning path to become a PM in the AI field."
+=== 처리 가이드라인 ===
 
-[Entered question: "{query}"]
-⚠️ All responses must be written in Korean.
+✅ 다음과 같은 질문들은 경력 개발 관련 질문으로 간주하고 직접 답변해주세요:
+- 경력 개발, 커리어 성장, 직무 전환 관련 질문
+- 특정 직무/역할에 대한 정보, 요구사항, 전망 
+- 스킬 개발, 학습 방법, 자격증, 교육 과정
+- 기타 직장인의 경력 성장과 관련된 모든 주제
+
+❌ 다음과 같은 질문들만 예외 메시지를 출력해주세요:
+- 날씨, 음식, 요리 레시피
+- 스포츠, 게임, 엔터테인먼트
+- 여행, 쇼핑, 취미 활동  
+- 건강, 의료, 개인적 고민 (직장과 무관한)
+- 정치, 종교, 사회 이슈
+- 기술적 문제 해결 (업무와 무관한 개인 기기 등)
+- 내부 데이터 접근 목적
+
+=== 응답 방식 ===
+
+1) 경력 개발 관련 질문인 경우:
+   - 전문적이고 도움이 되는 조언 제공
+   - 구체적인 실행 방안 포함
+   - 따뜻하고 격려하는 톤 유지
+
+2) 경력과 무관한 질문인 경우:
+   다음 메시지를 정확히 출력해주세요:
+
+   "죄송합니다. 현재 질문이 경력 증진과 관련이 없어 답변을 제공할 수 없습니다.
+
+   저는 다음과 같은 주제들에 대해 도움을 드릴 수 있습니다:
+   (1) 사내 구성원 기반 경력 증진 경로 추천
+   (2) 기술 트렌드를 반영한 향후 직무 추천  
+   (3) 사내 강의 기반 학습 경로 제공
+   (4) 조언을 위한 가상 멘토 연결
+   (5) 기타 경력 증진을 위한 간단한 상담
+
+   경력과 관련된 질문으로 다시 문의해 주시면 더 나은 도움을 드릴 수 있습니다.
+
+   예시:
+   - \"데이터 사이언티스트가 되려면 어떤 준비를 해야 하나요?\"
+   - \"현재 백엔드 개발자인데 DevOps로 전환하고 싶어요.\"
+   - \"AI 분야 PM이 되기 위한 학습 경로를 추천해 주세요.\""
+
+⚠️ 중요: 애매한 경우에는 항상 경력 개발 관련으로 간주하고 도움이 되는 답변을 제공해주세요.
+
+현재 시스템에서 제공하는 전문 기능들:
+- (1) 사내 구성원 기반 경력 증진 경로 추천
+- (2) 기술 트렌드를 반영한 향후 직무 추천
+- (3) 사내 강의 기반 학습 경로 제공  
+- (4) 조언이 필요한 가상 멘토 제공
+
+위 기능들과 직접 연관되지 않더라도, 경력 개발과 관련된 질문이면 일반적인 조언과 가이드를 제공해주세요.
 """
 
 #rewrite_prompt
-# rewrite_prompt = """
-# 당신은 사용자의 커리어 요약 정보를 바탕으로 네 가지 에이전트(path_recommend, role_model, trend_path, career_goal) 중 가장 적합한 에이전트가 실행될 수 있도록 질문을 구체적인 질문으로 재생성하는 역할을 합니다.
-
-# **에이전트별 역할**
-# - **path_recommend**: 사용자와 유사한 경력의 구성원 또는 목표 커리어를 달성한 구성원들의 데이터 기반 단계별 경력 경로 제시
-# - **role_model**: 사내 유사 경력의 롤모델과 대화하며 경험과 스킬 활용법, 멘토링 조언 제공
-# - **trend_path**: 최신 산업·기술 트렌드 반영하여 지금 바로 시작할 수 있는 학습과제와 경력 로드맵 추천
-# - **career_goal**: 사용자의 경력과 최신 기술 트렌드를 반영하여 향후 15년 후에 달성할 수 있는 직무를 추천해주고, 이를 위한 증진 로드맵 제시
-
-# **이전 대화 요약(chat_summary):**
-# {chat_summary}
-
-# **커리어 요약본:**
-# {career_summary}
-
-# **사용자 질문:**
-# {user_query}
-
-# **선택된 에이전트:**
-# {intent}
-
-# **회사의 미래 방향성:**
-# {direction}
-
-# **재생성 원칙:**
-# 1. **현재 상황 구체화**
-#    - 사용자의 현재 직무({role}), 경력년차, 기술 스택({skill_set}), 도메인({domain})을 명확히 명시
-#    - 이전 대화(chat_summary)의 맥락을 참고하여 일관성 있게 재작성
-
-# 2. **기술 방향성 연계**
-#    - 회사가 추진하는 핵심 기술 영역과 사용자의 기술 역량 발전 목표를 연결
-#    - 미래 기술 트렌드에 부합하는 성장 기회 반영
-#    - 기술적 우선순위에 맞는 역량 개발 방향 제시
-
-# 3. **에이전트별 최적화**
-#    - path_recommend: "[핵심 기술 영역]에서 [현재 직무]에서 [목표 직무]로의 기술 중심 경로"
-#    - role_model: "[특정 기술 스택/영역]에서 성공한 [유사 배경] 기술 전문가"
-#    - trend_path: "[미래 기술 트렌드]에 필요한 [구체적 기술/역량] 학습 로드맵"
-#    - career_goal: "[기술 발전 방향]을 고려한 [현재 경력] 기반 15년 후 기술 전문가 목표"
-
-# 4. **실행 가능성 강화**
-#    - 목표하는 직무/분야와 현재 경력의 연관성 분석
-#    - 구체적이고 측정 가능한 성장 지표 포함
-#    - 원본 질문의 의도 유지하되 실행 가능한 답변을 유도
-
-# **출력 형식:**
-# 재작성된 질문: [구체적이고 실행 가능한 질문]
-
-# 수정 이유: [기술 방향성과의 연계성, 구체화된 기술 역량, 에이전트 최적화 내용을 간략히 설명]
-
-# **주의사항:**
-# - 기업의 방향성은 기술 스택, 기술 트렌드, 기술 역량 등 기술적 관점과 역량 발전 관점에서 접근
-# - 구체적인 기술명이나 방법론을 언급하여 실무적 관점 강화
-
-# :경고: 모든 응답은 한국어로 작성하세요.
-# """
 rewrite_prompt="""
 당신은 사용자의 커리어 요약 정보를 바탕으로 네 가지 에이전트(path_recommend, role_model, trend_path, career_goal) 중 가장 적합한 에이전트가 실행될 수 있도록 질문을 구체적인 질문으로 재생성하는 역할을 합니다.
 
@@ -441,7 +429,7 @@ similar_analysis_prompt = """
 - 출력 JSON 구조에서 project, experience, certification은 **각각 정확히 1번씩만 등장해야 합니다.**
 - 동일한 키가 반복되거나 중첩되어서는 안 됩니다.
 - 예: "project" 블록이 여러 번 등장하면 오류입니다.
-- experience, certification의 경우, 없으면 [] 빈 배열을 반환하세요.
+- :반드시: experience, certification의 경우, 없으면 [] 빈 배열을 반환하세요.
 
 **품질 기준:**
 - 단순 나열이 아닌 의미 있는 성장 스토리가 담긴 로드맵 구성
@@ -480,7 +468,7 @@ career_recommend_prompt = """
 
 **출력 형식:**
 {{
-  "career_path_text": "사용자의 현재 경력과 목표, 회사의 방향성을 고려한 친근한 대화체 조언을 작성",
+  "career_path_text": "사용자의 현재 경력과 목표, 회사의 방향성을 고려한 친근한 대화체 조언을 작성 =",
   "career_path_roadmap": [
     {{
       "period": "연차 구간 (예: 3-5년차)",
@@ -517,7 +505,7 @@ career_recommend_prompt = """
 - project, role, job, key_skills는 :반드시: 입력된 기준 단어를 사용하여 작성
 - 회사의 핵심 기술(예: AI 전환, 에이전틱 AI 등)을 각 단계에 자연스럽게 통합
 - :반드시: 예시, 가이드, []는 모두 제거하고 실제 내용만 작성
-- experience, certification의 경우, 넣을 정보가 없으면 [] 빈 배열을 반환하세요.
+- :반드시: experience, certification의 경우, 넣을 정보가 없으면 [] 빈 배열을 반환하세요.
 
 """
 
@@ -575,7 +563,7 @@ internal_expert_mento_prompt="""
 
 주의:
 모든 필드를 빠짐없이 채우세요.
-experience, cert의 경우, 없으면 [] 빈 배열을 반환하세요.
+:반드시: experience, cert의 경우, 없으면 [] 빈 배열을 반환하세요.
 
 JSON 외의 자연어 설명은 포함하지 마세요.
 """
@@ -654,7 +642,7 @@ external_expert_mento_prompt = """
 JSON 외의 출력은 허용되지 않습니다.
 
 모든 필드를 빠짐없이 채우세요.
-experience, cert의 경우, 없으면 [] 빈 배열을 반환하세요.
+:반드시: experience, cert의 경우, 없으면 [] 빈 배열을 반환하세요.
 """
 
 
