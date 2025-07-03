@@ -1,3 +1,4 @@
+"""아래 코드를 수정하고싶어. 사용자가 종료라고 입력하면 요약해주는건 완전히 제거하고 그냥 무조건 계속 이전 대화기록을 프롬프트 안에 넣어주는거야. 대신 chat_sessions여기에 10개 이상의 채팅내용이 쌓이면 그때는 요약을 해주고 요약된 내용을 넣어주는거"""
 import os
 import sys
 import locale
@@ -98,6 +99,9 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
         mentor_chat_prompt = """
 당신은 {mentee_data}님에게 멘토링을 제공하는 시니어 전문가입니다.
 
+[이전 대화 내용]
+{conversation}
+
 [사용자 요청]
 {user_input}
 
@@ -126,8 +130,9 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
 [대화 스타일]
 - 존댓말을 사용할 것.  
 - 친근하면서도 전문적인 톤을 유지할 것.  
+- AI스럽지 않고 실제 직장인 선배와 대화하는 말투를 사용할 것.
 
-항상 실제 데이터와 사례를 기반으로 응답할 것.
+반드시 항상 실제 데이터와 사례를 기반으로 응답할 것.
 """
 
         chat_prompt = ChatPromptTemplate.from_messages([
@@ -172,30 +177,44 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
             "success": False,
             "error": str(e)
         }
+if __name__ == "__main__":
+    # 실제 DB 데이터 테스트
+    user_id = "1"  # PostgreSQL에 있는 실제 사용자 ID
+    session_id = "test_session_001"  # MongoDB 세션 ID
+    rolemodel_id = "6863baadfefc0f239caad583"  # MongoDB에 있는 실제 롤모델 ID
+    
+    print("=== 실제 DB 데이터로 멘토 채팅 테스트 ===")
+    
+    # 데이터 확인
+    try:
+        mentor_info = get_rolemodel_data(rolemodel_id)
+        print(f"✅ 롤모델 데이터: {mentor_info['info']}")
+        
+        direction_data = get_company_direction()
+        print(f"✅ 회사 방향성: {direction_data}")
+        
+        mentee_info = get_career_summary(user_id)
+        print(f"✅ 멘티 정보: {mentee_info}")
+        
+    except Exception as e:
+        print(f"❌ DB 연결 오류: {e}")
+        exit()
+    
+    print("-" * 50)
+    
+    while True:
+        user_input = input("\n멘티: ")
+        
+        result = chat_with_mentor(user_id, user_input, session_id, rolemodel_id)
+        
+        if result["success"]:
+            print(f"멘토: {result['answer']}")
+            print(f"\n📊 현재 chat_sessions: {chat_sessions}")
+            print(f"📊 current_summary: {current_summary}")
 
-# if __name__ == "__main__":
-#     # 테스트용 데이터
-#     mentee_info = "1"
-#     test_rolemodel_id = "6863baadfefc0f239caad583"
-    
-#     # 롤모델 정보 가져오기
-#     mentor_info = get_rolemodel_data(test_rolemodel_id)
-#     mentor_data = json.loads(mentor_info["info"])
-    
-#     print(f"=== {mentor_data['group_name']} 멘토와의 대화 시작 ===")
-#     print(f"멘토: {mentor_data} ({mentor_data['experience_years']} 경력)")
-#     print("명령어: 'quit' (종료)")
-#     print("-" * 50)
-    
-#     while True:
-#         user_input = safe_input("\n멘티: ")
-        
-#         result = chat_with_mentor(mentee_info, user_input, "session_123", test_rolemodel_id)
-        
-#         if result["success"]:
-#             print(f"멘토: {result['answer']}")
-#             if result["chat_summary"]:  # 종료시에만 요약 출력
-#                 print(f"📝 요약: {result['chat_summary']}")
-#                 break
-#         else:
-#             print(f"오류: {result['error']}")
+            if result["chat_summary"]:
+                print(f"📝 요약: {result['chat_summary']}")
+                break
+        else:
+            print(f"❌ 오류: {result['error']}")
+            break

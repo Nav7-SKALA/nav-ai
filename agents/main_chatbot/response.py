@@ -164,3 +164,7 @@ class LectureRecommendation(BaseModel):
     internal_course: str
     ax_college: str
     explanation: str
+
+class TrendResult(BaseModel):
+    text: str
+    ax_college: str

@@ -155,7 +155,7 @@ AX College 교육체계
 - Cloud: AI/클라우드 설계·구축·운영 End-to-End  
 - Architect: SW·데이터·인프라·AI 아키텍처 전략 설계  
 - Project Management: 제안·계획·리스크·성과 관리 등 PM 전주기  
-- AI Innovation: 생성형 AI·데이터 파이프라인·MLOps  
+- AI Innovation(AIX): 생성형 AI·데이터 파이프라인·MLOps  
 - Marketing & Sales: AX 제품·서비스 이해 기반 마케팅·영업  
 - Consulting: 전략·운영·기술 컨설팅 기법  
 - ESG: 디지털 ESG 자산 활용 리스크 관리·환경·사회·거버넌스  
@@ -170,7 +170,7 @@ AX College 교육체계
   Step 1: [강의명], 강의정보
   Step 2: [강의명], …  
   Step 3: [강의명], …  
-- ax_college: 추천하는 AX College 교육체계명  
+- ax_college: 추천하는 AX College 교육체계명만!!!! 설명은 제외하고!!
 - explanation: 추천 이유
 """
 
@@ -191,7 +191,7 @@ integration_prompt = """
 2. 시사점(1–2문장)  
    – 해당 트렌드가 실무에 주는 의미  
 3. 추천 강의 상세 설명 (3–4문장)  
-  – 사용자 커리어 요약에서 주요 성과나 경험을 발췌해 “~ 경험을 바탕으로” 형태로 자연스럽게 시작
+  – 사용자 커리어 요약에서 주요 성과나 경험을 발췌해 "~ 경험을 바탕으로" 형태로 자연스럽게 시작
    – internal_course의 자세한 강의 정보를 반드시 포함하여 왜 추천하는지 사용자 커리어와 연관지어서 구체적으로 설명
    - 특히 어떤 유형의 수업인지 반드시 소개
 4. AX College 교육체계 설명 (1–2문장)  
@@ -202,7 +202,8 @@ integration_prompt = """
    – 총 6–8문장, 각 섹션별 최소 문장 수 준수  
 7. 제안 메시지 후에, 사용자에게 답변과 관련되 후속 질문을 요청하며 대화를 이어가세요.
 
-출력 형식:
+반드시 다음 형식으로 응답하세요:
+
 **▶ 트렌드 요약 및 시사점 **  
 
 **▶ mySUNI 교육 추천 (internal_course)**  
@@ -217,7 +218,7 @@ integration_prompt = """
 
 **▶ 추천 이유 (explanation)**  
 
-
+위의 전체 내용을 text 필드에 넣고, AX College 관련 부분만 ax_college 필드에 별도로 추출하여 응답하세요.
 """
 
 #intent_prompt
