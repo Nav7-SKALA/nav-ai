@@ -578,7 +578,7 @@ async def trend(state: DevelopState) -> DevelopState:
             template=integration_prompt
         )
         
-        integration_chain = integration_template | llm.with_structured_output(TrendResult)
+        integration_chain = integration_template | llm
         final_result = integration_chain.invoke({
             "career_summary": state.get("career_summary"),
             "trend_result": trend_result,
@@ -587,13 +587,13 @@ async def trend(state: DevelopState) -> DevelopState:
             "explanation": explanation
         })
         
-        # 5. 최종 결과 반환 (기존 구조 유지)
         return {
             **state,
-            'result': {'text': final_result.text,
-                        'ax_college': final_result.ax_college},
-            'messages': AIMessage(final_result.text)
+            'result': {'text': final_result.content,
+                       'ax_college': ax_college},
+            'messages': AIMessage(final_result.content)
         }
+        
         
     except Exception as e:
         # 오류 처리
@@ -604,6 +604,7 @@ async def trend(state: DevelopState) -> DevelopState:
                        'ax_college': error_message},
             'messages': AIMessage(error_message)
         }
+
     
 
 async def future_career_recommend(state: DevelopState) -> DevelopState:
