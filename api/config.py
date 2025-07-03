@@ -14,3 +14,5 @@ VECTOR_STORE_ROOT = os.path.join(BASE_DIR, "vector_store")
 # 모델 파라미터
 MODEL_NAME="gpt-4o-mini"
 TEMPERATURE=0
+
+DB_DIR = os.path.join(BASE_DIR, "db")

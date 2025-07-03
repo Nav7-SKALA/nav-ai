@@ -488,13 +488,14 @@ async def trend(state: DevelopState) -> DevelopState:
         internal_course = lecture_recommendation.get('internal_course', '')
         ax_college = lecture_recommendation.get('ax_college', '')
         explanation = lecture_recommendation.get('explanation', '')
-        
+
         # 4. 통합 분석 실행
         integration_template = PromptTemplate(
             input_variables=["career_summary", "trend_result", "internal_course","ax_college", "explanation"],
             template=integration_prompt
         )
         
+        # integration_chain = integration_template | llm.with_structured_output(TrendResult)
         integration_chain = integration_template | llm
         final_result = integration_chain.invoke({
             "career_summary": state.get("career_summary"),
@@ -510,6 +511,12 @@ async def trend(state: DevelopState) -> DevelopState:
                        'ax_college': ax_college},
             'messages': AIMessage(final_result.content)
         }
+        # return{
+        #     **state,
+        #     'result': {'text': final_result.text,
+        #                'ax_college': final_result.ax_college},
+        #     'messages': AIMessage(final_result.text)
+        # }
         
         
     except Exception as e:

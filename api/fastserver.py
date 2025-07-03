@@ -4,7 +4,7 @@ import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-from config import BASE_DIR, AGENT_ROOT, AGENT_DIR, VECTOR_STORE_ROOT
+from config import BASE_DIR, AGENT_ROOT, AGENT_DIR, VECTOR_STORE_ROOT,DB_DIR
 
 
 sys.path.append(BASE_DIR)
@@ -12,6 +12,8 @@ sys.path.append(AGENT_ROOT)
 sys.path.append(AGENT_DIR["main_chatbot"])
 sys.path.append(AGENT_DIR["mentor_chat"])
 sys.path.append(VECTOR_STORE_ROOT)
+sys.path.append(DB_DIR)
+
 
 # 경로 설정 후 import
 from typing import Any, Optional, List, Union
@@ -32,7 +34,7 @@ import uvicorn
 from upsert_profile_vector import add_profile_to_vectordb
 from career_summary_agent import careerSummary_invoke
 from career_title_agent import CareerTitle_invoke
-from mentor_chat.mentor_chat_agent import chat_with_mentor, create_chat_session
+from mentor_chat.mentor_chat_agent import chat_with_mentor
 
 app = FastAPI(
     docs_url="/apis/docs",
@@ -150,13 +152,14 @@ class RoleModelRequest(BaseModel):
     user_id: str = Field(..., example="testId123")
     input_query: str = Field(..., example="백엔드 개발 전문가가 되는 과정 중에 어떤 게 가장 힘드셨나요?")
     session_id: Optional[str] = Field(..., example="sessionID123") # mongoDB sessionID (롤모델 저장 되어 있는)
+    rolemodel_id: str = Field(..., example="6863baadfefc0f239caad583") # rolemodel_id
 
 class RoleModelResponse(BaseModel):
     user_id: str
     chat_summary: str
     answer: str
     success: bool
-    error: Optional[str] = None
+    error: Optional[str]
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 2) 전역 예외 핸들러 등록
@@ -352,12 +355,12 @@ def career_title(request: ProfileRequest):
 async def rolemodel_chat(request: RoleModelRequest):
     try:
         result = chat_with_mentor(
-            user_input=request.input_query,   # 여기를 input_query로
-            session_id=request.session_id
+            user_id=request.user_id,
+            input_query=request.input_query,
+            session_id=request.session_id,
+            rolemodel_id=request.rolemodel_id  # 이 필드도 추가 필요
         )
-        # 요청한 user_id 반영
-        result["user_id"] = request.user_id
-
+        
         return RoleModelResponse(**result)
     except Exception as e:
         return RoleModelResponse(
