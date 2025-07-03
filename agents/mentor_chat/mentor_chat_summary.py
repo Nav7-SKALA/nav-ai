@@ -27,13 +27,13 @@ chat_summary_prompt = """
 - 만약 입력된 대화가 없으면 첫 대화임을 알려주세요.
 """
 
-def chat_summary(chat_sessions: list):
+def chat_summary(chat_histroy: str):
     prompt_template = PromptTemplate(
         input_variables=["chat_history"],
         template=chat_summary_prompt
     )
     
     chain = prompt_template | llm
-    result = chain.invoke({"chat_history": chat_sessions})
+    result = chain.invoke({"chat_history": chat_histroy})
     
     return result.content

@@ -1,4 +1,3 @@
-"""아래 코드를 수정하고싶어. 사용자가 종료라고 입력하면 요약해주는건 완전히 제거하고 그냥 무조건 계속 이전 대화기록을 프롬프트 안에 넣어주는거야. 대신 chat_sessions여기에 10개 이상의 채팅내용이 쌓이면 그때는 요약을 해주고 요약된 내용을 넣어주는거"""
 import os
 import sys
 import locale
@@ -40,10 +39,7 @@ TEMPERATURE = os.getenv("TEMPERATURE")
 
 llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
 
-# 전역 변수
-chat_sessions = []
-current_summary = ""
-MESSAGE_LIMIT = 10
+
 
 def safe_input(prompt):
     try:
@@ -52,29 +48,15 @@ def safe_input(prompt):
         print("입력 인코딩 오류가 발생했습니다. 다시 입력해주세요.")
         return safe_input(prompt)
 
-def auto_summarize():
-    """10개마다 자동 요약"""
-    global chat_sessions, current_summary
-    
-    if len(chat_sessions) >= MESSAGE_LIMIT:
-        new_summary = chat_summary(chat_sessions)
-        current_summary = new_summary if not current_summary else f"{current_summary} + {new_summary}"
-        chat_sessions = chat_sessions[-2:]  # 최근 2개만 유지
-
 def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_id: str) -> Dict:
     """멘토와 대화하는 메인 함수"""
-    global chat_sessions, current_summary
     
     try:
-        # 종료 체크
+        # 종료 체크 (요약 없이 바로 종료)
         if input_query.strip().lower() in ['종료', '끝', 'exit', 'quit']:
-            final_summary = current_summary
-            if chat_sessions:
-                final_summary += f" + {chat_summary(chat_sessions)}"
-            
             return {
                 "user_id": user_id,
-                "chat_summary": final_summary,
+                "chat_summary": "",
                 "answer": "대화가 종료되었습니다.",
                 "success": True,
                 "error": None
@@ -92,7 +74,7 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
         # 멘티 데이터 가져오기
         mentee_info = get_career_summary(user_id)
         
-        # 이전 대화 기록 데이터 가져오기
+        # 매번 이전 대화 기록 가져오기
         conversation_history = get_latest_chat_summary(session_id)
 
         # 프롬프트 설정
@@ -152,18 +134,13 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
             "direction": direction_data
         })
         
-        # 대화 히스토리에 추가
-        chat_sessions.extend([
-            HumanMessage(content=input_query),
-            AIMessage(content=response.content)
-        ])
-        
-        # 자동 요약 체크
-        auto_summarize()
+        result = response.content
+        print("result황니해보자!!!!!!",result)
+        summary_result = chat_summary(conversation_history)
         
         return {
             "user_id": user_id,
-            "chat_summary": "",
+            "chat_summary": summary_result,
             "answer": response.content,
             "success": True,
             "error": None
@@ -177,6 +154,7 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
             "success": False,
             "error": str(e)
         }
+
 if __name__ == "__main__":
     # 실제 DB 데이터 테스트
     user_id = "1"  # PostgreSQL에 있는 실제 사용자 ID
@@ -209,11 +187,10 @@ if __name__ == "__main__":
         
         if result["success"]:
             print(f"멘토: {result['answer']}")
-            print(f"\n📊 현재 chat_sessions: {chat_sessions}")
-            print(f"📊 current_summary: {current_summary}")
-
             if result["chat_summary"]:
                 print(f"📝 요약: {result['chat_summary']}")
+            
+            if user_input.strip().lower() in ['종료', '끝', 'exit', 'quit']:
                 break
         else:
             print(f"❌ 오류: {result['error']}")

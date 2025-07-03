@@ -484,10 +484,15 @@ async def trend(state: DevelopState) -> DevelopState:
             lecture_recommend(user_query,career_summary)     
         )
 
+        print(f"DEBUG - trend_analysis: {trend_analysis}")
+        print(f"DEBUG - lecture_recommendation: {lecture_recommendation}")
+
         trend_result = trend_analysis.get('trend_result', '')
         internal_course = lecture_recommendation.get('internal_course', '')
         ax_college = lecture_recommendation.get('ax_college', '')
         explanation = lecture_recommendation.get('explanation', '')
+
+        print(f"DEBUG - extracted ax_college: {ax_college} -> 이게 최종적으로 반환되고 있는 값" )
 
         # 4. 통합 분석 실행
         integration_template = PromptTemplate(
