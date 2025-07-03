@@ -148,14 +148,10 @@ class RoleModelGroup(BaseModel):
 class GroupedRoleModelResult(BaseModel):
     """그룹화된 롤모델 결과"""
     analysis_summary: str = Field(description="전체 분석 요약")
-    total_employees: int = Field(description="분석한 총 사원 수")
     groups: List[RoleModelGroup] = Field(description="생성된 롤모델 그룹들 (2-4개)")
     analysis_summary: str = Field(
         default='',
         description="전체 분석 요약")
-    # total_employees: int = Field(
-    #     default=0,
-    #     description="분석한 총 사원 수")
     groups: List[RoleModelGroup] = Field(
         default=[],
         description="생성된 롤모델 그룹들 (3개)")

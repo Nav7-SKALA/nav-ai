@@ -19,16 +19,7 @@ from agents.tools.tavily_search import search_tavily
 from agents.tools.lecture_search import lecture_recommend
 import json, asyncio
 
-
-# pydantic error -> 반복 실행 횟수 설정
-def limited_retry_chain(chain, input_data: dict, max_retries: int = 2):
-    for attempt in range(1, max_retries + 1):
-        try:
-            return chain.invoke(input_data)
-        except Exception as e:
-            print(f"⚠️ Retry {attempt} failed: {e}")
-            if attempt == max_retries:
-                raise
+from typing import Dict, Any
 
 
 # pydantic error -> 반복 실행 횟수 설정
@@ -40,6 +31,15 @@ def limited_retry_chain(chain, input_data: dict, max_retries: int = 2):
             print(f"⚠️ Retry {attempt} failed: {e}")
             if attempt == max_retries:
                 raise
+
+
+def clean_brackets(text_or_list):
+    """대괄호 제거 헬퍼 함수"""
+    if isinstance(text_or_list, list):
+        return [item.replace('[', '').replace(']', '') for item in text_or_list]
+    elif isinstance(text_or_list, str):
+        return text_or_list.replace('[', '').replace(']', '')
+    return text_or_list
 
 def exception(state: DevelopState) -> DevelopState:    
     ex_prompt = PromptTemplate(
@@ -227,7 +227,7 @@ async def create_internal_expert(state: DevelopState) -> DevelopState:
         print(user_query)
         expert_info = get_topN_info(query_text = user_query,
                                     user_id = state.get('user_id', ''),
-                                    grade = 'CL4', # ? 확인 필요 
+                                    grade = 'CL4',  
                                     top_n=5)
         if not expert_info.strip():
             return None
@@ -251,6 +251,7 @@ async def create_internal_expert(state: DevelopState) -> DevelopState:
                 )
         print(result)
         result.group_name = "사내 전문가"
+        result.common_project = clean_brackets(result.common_project)
 
         print("✅ 사내 전문가 멘토 생성 완료")
         return result
@@ -291,6 +292,9 @@ async def create_internal_similar(state: DevelopState) -> DevelopState:
                         max_retries=2
                 )
         result.group_name = "사내 유사 경력 구성원"
+        # 프로젝트명 내에 대괄호 삭제
+        result.common_project = clean_brackets(result.common_project)
+
         print(result)
         print("✅ 사내 유사 경력 멘토 생성 완료")
         return result
@@ -464,93 +468,6 @@ async def role_model(state: DevelopState) -> DevelopState:
     }
 
 
-# def role_model(state: DevelopState) -> DevelopState:
-#     """
-#     롤모델 그룹 생성 노드 (Pydantic 파싱 실패 시 최대 2회 재시도 포함)
-#     """
-#     try:
-#         top_n = 5
-#         info = get_topN_emp(state.get('rag_query',''), state.get('user_id',''), top_n)
-#         grouping_prompt = PromptTemplate(
-#             input_variables=["similar_employees", "user_query", "total_count", "skill_set", "job", "role", "domain"],
-#             template=role_prompt
-#         )
-#         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
-#         parser = PydanticOutputParser(pydantic_object=GroupedRoleModelResult)
-#         rolemodel_chain = grouping_prompt | llm | parser
-
-#         try:
-#             structured_result = limited_retry_chain(
-#                 rolemodel_chain,
-#                 {
-#                     "similar_employees": info,
-#                     "user_query": state.get('input_query'),
-#                     "total_count": top_n,
-#                     "skill_set": skill_set,
-#                     "role": role,
-#                     "domain": domain,
-#                     "job": job
-#                 },
-#                 max_retries=2
-#             )
-#         except Exception as e:
-#             print("❌ 롤모델 재시도 실패. 기본 결과 반환.", e)
-#             structured_result = GroupedRoleModelResult()
-
-#         role_model_list = []
-#         for i, group in enumerate(structured_result.groups):
-#             role_model_dict = {
-#                 'group_id': f'group_{i+1}',
-#                 'group_name': group.group_name,
-#                 'current_position': group.role_model.current_position,
-#                 'experience_years': group.role_model.experience_years,
-#                 'main_domains': group.role_model.main_domains,
-#                 'advice_message': group.role_model.advice_message,
-#                 'common_skill_set': group.common_skill_set,
-#                 'common_career_path': group.common_career_path,
-#                 'common_project': group.common_project,
-#                 'common_experience': group.common_experience,
-#                 'common_cert': group.common_cert
-#             }
-#             role_model_list.append(role_model_dict)
-
-#         # summary_text = f"""🎯 분석 완료: {structured_result.total_employees}명의 사원 데이터를 {len(structured_result.groups)}개 그룹으로 분류
-#         summary_text = f"""🎯 분석 완료\n
-
-# 📋 생성된 롤모델 그룹:
-# {chr(10).join([f"• {group.group_name}: {group.role_model.name} ({group.member_count}명)" for group in structured_result.groups])}
-
-# 💡 {structured_result.analysis_summary}
-
-# 📊 상세 롤모델 정보:
-# {chr(10).join([
-#     f"▶ {model['group_name']} (ID: {model['group_id']})" + chr(10) +
-#     f"  • 현재 직책: {model['current_position']}" + chr(10) +
-#     f"  • 경력: {model['experience_years']}" + chr(10) +
-#     f"  • 주요 도메인: {', '.join(model['main_domains'])}" + chr(10) +
-#     f"  • 조언: {model['advice_message']}" + chr(10) +
-#     f"  • 공통 기술 스택: {', '.join(model['common_skill_set'])}" + chr(10) +
-#     f"  • 공통 경력 증진 패턴: {', '.join(model['common_career_path'])}" + chr(10) +
-#     f"  • 공통 프로젝트: {', '.join(model['common_project'])}" + chr(10) +
-#     f"  • 공통 경험: {', '.join(model['common_experience'])}" + chr(10) +
-#     f"  • 공통 자격증: {', '.join(model['common_cert'])}" + chr(10)
-#     for model in role_model_list
-# ])}
-# """
-
-#     except Exception as e:
-#         # TODO: 다른 노드 실행할 수 있도록 처리 (출력값이 없을 수는 없게)
-#         return {**state,
-#                 'error': f'롤모델 생성 중 오류 발생: {str(e)}'}
-
-#     return {**state,
-#             'result': {
-#                 'rolemodels': role_model_list,
-#             },
-#             'messages': AIMessage(summary_text)
-#         }
-  
-
 async def trend(state: DevelopState) -> DevelopState:
     """
     기술 트렌드 검색과 사내 교육 추천을 통합하는 최종 함수
@@ -606,99 +523,6 @@ async def trend(state: DevelopState) -> DevelopState:
         }
 
     
-
-# async def future_career_recommend(state: DevelopState) -> DevelopState:
-#     """
-#     경력 요약 기반 미래 직무 추천 노드 (async 버전)
-#     1. 경력 요약, 회사 방향성에서 주요 기술 스택 파악
-#     2. 다중 소스 검색으로 최신 기술 트렌드 수집
-#     3. 15년 후 직무 추천
-#     """
-#     try:
-#         # 회사 방향성 주입
-#         direction = '모든 업무와 프로젝트에 AI를 기본 적용할 줄 아는 AI 기본 역량을 갖춘 사내 구성원' # get_company_direction()
-
-#         career_summary = state.get('career_summary', '')
-#         user_query = state.get('input_query', '')
-        
-#         if not career_summary or career_summary == "None":
-#             return {
-#                 **state,
-#                 'result': {
-#                     'text': '경력 정보가 없어서 미래 직무를 추천할 수 없습니다. 경력 정보를 먼저 등록해주세요.'
-#                 },
-#                 'messages': AIMessage('경력 정보가 없어서 미래 직무를 추천할 수 없습니다.')
-#             }
-        
-#         llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
-        
-#         # 1단계: 경력 요약에서 기술 스택 추출
-#         tech_extraction_template = PromptTemplate(
-#             input_variables=["career_summary", "user_query", "direction"],
-#             template=tech_extraction_prompt
-#         )
-#         tech_extraction_chain = tech_extraction_template | llm
-#         tech_analysis_result = tech_extraction_chain.invoke({
-#             "career_summary": career_summary,
-#             "user_query": user_query,
-#             "direction": direction
-#         })
-
-#         # 2단계: 키워드 추출
-#         keyword_template = PromptTemplate(
-#             input_variables=["analysis_result"],
-#             template=future_search_prompt
-#         )
-#         keyword_chain = keyword_template | llm
-#         keywords_result = keyword_chain.invoke({
-#             "analysis_result": tech_analysis_result.content
-#         })
-#         # print(f"추출 키워드: {keywords_result.content}")
-
-#         # 3단계: 키워드 기반 최신 내용 검색
-#         # 키워드를 리스트로 변환
-#         extracted_keywords = [kw.strip() for kw in keywords_result.content.split(',')]
-#         print(f"파싱 키워드: {extracted_keywords}")
-
-#         # 3단계: 다중 소스 병렬 검색 (GitHub, Reddit, Tavily)
-#         search_results = await trend_analysis_for_keywords(extracted_keywords)
-#         # print(f"검색 결과: {search_results}")
-
-#         # 검색 결과를 텍스트로 포맷팅
-#         formatted_search_results = format_search_results(search_results)
-
-#         # 4단계: 15년 후 미래 직무 추천
-#         future_job_template = PromptTemplate(
-#             input_variables=["career_summary", "tech_analysis", "search_tech_trends", "direction"],
-#             template=future_job_prompt
-#         )
-#         future_job_chain = future_job_template | llm
-#         final_result = future_job_chain.invoke({
-#             "career_summary": career_summary,
-#             "tech_analysis": tech_analysis_result.content,
-#             "search_tech_trends": formatted_search_results,
-#             "direction": direction
-#         })
-
-#         return {
-#             **state,
-#             'result': {
-#                 'text': final_result.content,
-#             },
-#             'messages': AIMessage(final_result.content)
-#         }
-        
-#     except Exception as e:
-#         return {
-#             **state,
-#             'result': {
-#                 'text': f'미래 직무 추천 중 오류 발생: {str(e)}'
-#             },
-#             'error': f'미래 직무 추천 중 오류 발생: {str(e)}'
-#         }
-
-import asyncio
-from typing import Dict, Any
 
 async def future_career_recommend(state: DevelopState) -> DevelopState:
     """
