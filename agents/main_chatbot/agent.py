@@ -12,9 +12,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
 from langchain_openai import ChatOpenAI
-from vector_store.chroma_search import find_best_match, get_topN_info, get_topN_emp
+from vector_store.chroma_search import find_best_match, get_topN_info
 from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords, format_search_results, tavily_search_for_keywords
-from agents.tools.tavily_search import search_tavily
 import json
 
 # pydantic error -> 반복 실행 횟수 설정
@@ -29,14 +28,18 @@ def limited_retry_chain(chain, input_data: dict, max_retries: int = 2):
 
 def exception(state: DevelopState) -> DevelopState:    
     ex_prompt = PromptTemplate(
-                    input_variables=["query"],
+                    input_variables=["query", "job", "role", "skill_set", "domain"],
                     template=exception_prompt
                     )
     llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
     exception_chain = ex_prompt | llm | StrOutputParser()
 
     result = exception_chain.invoke({
-        "query": state.get('input_query')
+        "query": state.get('input_query'),
+        "job": job,
+        "role": role,
+        "skill_set": skill_set,
+        "domain": domain
     })
     return {
         **state,
