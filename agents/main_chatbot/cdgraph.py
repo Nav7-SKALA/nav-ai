@@ -5,6 +5,8 @@ from agents.main_chatbot.agent import intent_analize, rewrite, exception, path, 
 from agents.main_chatbot.agent import similar_roadmap, future_career_recommend
 from db.mongo import get_session_data
 from db.postgres import get_career_summary
+from agents.main_chatbot.performance_monitor import monitor
+
 ## Router
 # 1차 분기: EXCEPTION 여부 판단
 def route_from_intent(state: DevelopState) -> Literal["rewriter_node", "EXCEPTION"]:
@@ -88,6 +90,11 @@ def create_initial_state(user_id: str, input_query: str, career_summary: str, ch
     }
 
 async def run_mainchatbot(user_id: str, input_query: str, session_id: str):
+    monitor.start_monitoring()
+
     graph = createworkflow()
     result = await graph.ainvoke(create_initial_state(user_id, input_query, get_career_summary(user_id),get_session_data(session_id)))
+    
+    monitor.print_summary()
+    
     return result
