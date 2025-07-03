@@ -134,10 +134,10 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
             "direction": direction_data
         })
         
-        result = response.content
-        print("result황니해보자!!!!!!",result)
-        summary_result = chat_summary(conversation_history)
-        
+        # chat_summary 진행
+        summary_result = chat_summary(response.content)
+        # print("chech summary result", summary_result)
+        # print("="*60)
         return {
             "user_id": user_id,
             "chat_summary": summary_result,
