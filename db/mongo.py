@@ -2,21 +2,21 @@ from pymongo import MongoClient, DESCENDING
 import os
 from bson import ObjectId 
 
-# def get_session_data(session_id: str):
-#     """MongoDB에서 세션 데이터 가져오기"""
-#     try:
-#         client = MongoClient(os.getenv("MONGO_URL"))
-#         db = client[os.getenv("MONGO_DB")]
-#         collection = db[os.getenv("MONGO_COLLECTION")]
-#         doc = collection.find_one(
-#             {"sessionId": session_id},
-#             sort=[("createdAt", DESCENDING)]
-#         )
-#         client.close()
-#         return doc if doc else None
-#     except Exception as e:
-#         print(f"MongoDB 조회 오류: {e}")
-#         return None
+def get_session_data(session_id: str):
+    """MongoDB에서 세션 데이터 가져오기"""
+    try:
+        client = MongoClient(os.getenv("MONGO_URL"))
+        db = client[os.getenv("MONGO_DB")]
+        collection = db[os.getenv("MONGO_COLLECTION")]
+        doc = collection.find_one(
+            {"sessionId": session_id},
+            sort=[("createdAt", DESCENDING)]
+        )
+        client.close()
+        return doc if doc else None
+    except Exception as e:
+        print(f"MongoDB 조회 오류: {e}")
+        return None
 
 # def get_latest_chat_summary(session_id: str):
 #     """해당 세션의 최신 chat_summary 가져오기"""
