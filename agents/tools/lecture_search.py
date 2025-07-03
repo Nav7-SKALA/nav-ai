@@ -26,30 +26,74 @@ class EmbeddingModel:
         return self.model.encode(query).tolist()
 
 
+# def lecture_search(query: str) -> list:
+#     """vectorDB에서 정보 검색 도구"""
+#     client = get_chroma_client()
+#     collection_name = os.getenv("LEC_COLLECTION_NAME")
+#     collection = client.get_or_create_collection(collection_name)
+    
+#     embed = EmbeddingModel()
+#     query_embedding = embed.embed_query(query) 
+
+#     TOP_N = 5
+#     results = collection.query(
+#         query_embeddings=[query_embedding],
+#         n_results=TOP_N,
+#         include=["documents", "metadatas"]
+#     )
+
+#     documents = results.get("documents", [[]])[0]  # 실제 강의 문서들
+#     metadatas = results.get("metadatas", [[]])[0]  # 실제 메타데이터들
+    
+#     lectures_list = []
+#     for num, (doc, meta) in enumerate(zip(documents, metadatas)):
+#         lectures_list.append(f"강의{num+1}: {doc}, 메타데이터: {meta}")
+
+#     return lectures_list
+
 def lecture_search(query: str) -> list:
     """vectorDB에서 정보 검색 도구"""
-    client = get_chroma_client()
-    collection_name = os.getenv("LEC_COLLECTION_NAME")
-    collection = client.get_or_create_collection(collection_name)
-    
-    embed = EmbeddingModel()
-    query_embedding = embed.embed_query(query) 
+    try:
+        print(f"DEBUG - lecture_search query: '{query}'")
+        print(f"DEBUG - LEC_COLLECTION_NAME: {os.getenv('LEC_COLLECTION_NAME')}")
+        
+        client = get_chroma_client()
+        print(f"DEBUG - ChromaDB client created: {client}")
+        
+        collection_name = os.getenv("LEC_COLLECTION_NAME")
+        collection = client.get_or_create_collection(collection_name)
+        print(f"DEBUG - Collection: {collection}")
+        print(f"DEBUG - Collection count: {collection.count()}")
+        
+        embed = EmbeddingModel()
+        query_embedding = embed.embed_query(query) 
+        print(f"DEBUG - Query embedding length: {len(query_embedding) if query_embedding else 0}")
 
-    TOP_N = 5
-    results = collection.query(
-        query_embeddings=[query_embedding],
-        n_results=TOP_N,
-        include=["documents", "metadatas"]
-    )
+        TOP_N = 5
+        results = collection.query(
+            query_embeddings=[query_embedding],
+            n_results=TOP_N,
+            include=["documents", "metadatas"]
+        )
+        
+        print(f"DEBUG - ChromaDB results: {results}")
+        
+        documents = results.get("documents", [[]])[0]
+        metadatas = results.get("metadatas", [[]])[0]
+        
+        print(f"DEBUG - Documents count: {len(documents)}")
+        print(f"DEBUG - Metadatas count: {len(metadatas)}")
+        
+        lectures_list = []
+        for num, (doc, meta) in enumerate(zip(documents, metadatas)):
+            lectures_list.append(f"강의{num+1}: {doc}, 메타데이터: {meta}")
 
-    documents = results.get("documents", [[]])[0]  # 실제 강의 문서들
-    metadatas = results.get("metadatas", [[]])[0]  # 실제 메타데이터들
-    
-    lectures_list = []
-    for num, (doc, meta) in enumerate(zip(documents, metadatas)):
-        lectures_list.append(f"강의{num+1}: {doc}, 메타데이터: {meta}")
-
-    return lectures_list
+        print(f"DEBUG - Final lectures_list: {lectures_list}")
+        return lectures_list
+        
+    except Exception as e:
+        print(f"DEBUG - lecture_search exception: {str(e)}")
+        return []  # 빈 리스트 반환
 
 
 
