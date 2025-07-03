@@ -10,4 +10,4 @@ def get_session_data(session_id:str):
         sort=[("createdAt", DESCENDING)]
     )
     # return doc.get("answer") if doc else "None"
-    return doc.get("chat_summary") if doc else None
+    return doc.get("summary") if doc else None

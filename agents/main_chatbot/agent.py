@@ -602,16 +602,149 @@ async def trend(state: DevelopState) -> DevelopState:
 
     
 
+# async def future_career_recommend(state: DevelopState) -> DevelopState:
+#     """
+#     경력 요약 기반 미래 직무 추천 노드 (async 버전)
+#     1. 경력 요약, 회사 방향성에서 주요 기술 스택 파악
+#     2. 다중 소스 검색으로 최신 기술 트렌드 수집
+#     3. 15년 후 직무 추천
+#     """
+#     try:
+#         # 회사 방향성 주입
+#         direction = '모든 업무와 프로젝트에 AI를 기본 적용할 줄 아는 AI 기본 역량을 갖춘 사내 구성원' # get_company_direction()
+
+#         career_summary = state.get('career_summary', '')
+#         user_query = state.get('input_query', '')
+        
+#         if not career_summary or career_summary == "None":
+#             return {
+#                 **state,
+#                 'result': {
+#                     'text': '경력 정보가 없어서 미래 직무를 추천할 수 없습니다. 경력 정보를 먼저 등록해주세요.'
+#                 },
+#                 'messages': AIMessage('경력 정보가 없어서 미래 직무를 추천할 수 없습니다.')
+#             }
+        
+#         llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
+        
+#         # 1단계: 경력 요약에서 기술 스택 추출
+#         tech_extraction_template = PromptTemplate(
+#             input_variables=["career_summary", "user_query", "direction"],
+#             template=tech_extraction_prompt
+#         )
+#         tech_extraction_chain = tech_extraction_template | llm
+#         tech_analysis_result = tech_extraction_chain.invoke({
+#             "career_summary": career_summary,
+#             "user_query": user_query,
+#             "direction": direction
+#         })
+
+#         # 2단계: 키워드 추출
+#         keyword_template = PromptTemplate(
+#             input_variables=["analysis_result"],
+#             template=future_search_prompt
+#         )
+#         keyword_chain = keyword_template | llm
+#         keywords_result = keyword_chain.invoke({
+#             "analysis_result": tech_analysis_result.content
+#         })
+#         # print(f"추출 키워드: {keywords_result.content}")
+
+#         # 3단계: 키워드 기반 최신 내용 검색
+#         # 키워드를 리스트로 변환
+#         extracted_keywords = [kw.strip() for kw in keywords_result.content.split(',')]
+#         print(f"파싱 키워드: {extracted_keywords}")
+
+#         # 3단계: 다중 소스 병렬 검색 (GitHub, Reddit, Tavily)
+#         search_results = await trend_analysis_for_keywords(extracted_keywords)
+#         # print(f"검색 결과: {search_results}")
+
+#         # 검색 결과를 텍스트로 포맷팅
+#         formatted_search_results = format_search_results(search_results)
+
+#         # 4단계: 15년 후 미래 직무 추천
+#         future_job_template = PromptTemplate(
+#             input_variables=["career_summary", "tech_analysis", "search_tech_trends", "direction"],
+#             template=future_job_prompt
+#         )
+#         future_job_chain = future_job_template | llm
+#         final_result = future_job_chain.invoke({
+#             "career_summary": career_summary,
+#             "tech_analysis": tech_analysis_result.content,
+#             "search_tech_trends": formatted_search_results,
+#             "direction": direction
+#         })
+
+#         return {
+#             **state,
+#             'result': {
+#                 'text': final_result.content,
+#             },
+#             'messages': AIMessage(final_result.content)
+#         }
+        
+#     except Exception as e:
+#         return {
+#             **state,
+#             'result': {
+#                 'text': f'미래 직무 추천 중 오류 발생: {str(e)}'
+#             },
+#             'error': f'미래 직무 추천 중 오류 발생: {str(e)}'
+#         }
+
+import asyncio
+from typing import Dict, Any
+
 async def future_career_recommend(state: DevelopState) -> DevelopState:
     """
-    경력 요약 기반 미래 직무 추천 노드 (async 버전)
+    경력 요약 기반 미래 직무 추천 노드 (재시도 로직 포함)
     1. 경력 요약, 회사 방향성에서 주요 기술 스택 파악
-    2. 다중 소스 검색으로 최신 기술 트렌드 수집
+    2. 다중 소스 검색으로 최신 기술 트렌드 수집 (최대 2회 재시도)
     3. 15년 후 직무 추천
     """
+    
+    async def search_with_retry(keywords: list, max_retries: int = 2) -> tuple[str, bool]:
+        """검색 및 포맷팅을 재시도하는 함수"""
+        last_error = None
+        
+        for attempt in range(max_retries + 1):  # 최초 1회 + 재시도 2회 = 총 3회
+            try:
+                print(f"검색 시도 {attempt + 1}회차...")
+                
+                # 검색 실행
+                search_results = await trend_analysis_for_keywords(keywords)
+                
+                # 검색 결과가 비어있는지 확인
+                if not search_results or len(search_results) == 0:
+                    raise ValueError("검색 결과가 비어있습니다")
+                
+                # 포맷팅 시도
+                formatted_results = format_search_results(search_results)
+                
+                # 포맷팅 결과가 의미있는지 확인
+                if not formatted_results or len(formatted_results.strip()) < 50:
+                    raise ValueError("포맷팅된 결과가 너무 짧습니다")
+                
+                print(f"검색 성공! (시도 {attempt + 1}회차)")
+                return formatted_results, True  # 성공 시 (결과, True) 반환
+                
+            except Exception as e:
+                last_error = e
+                print(f"검색 시도 {attempt + 1}회차 실패: {str(e)}")
+                
+                if attempt < max_retries:
+                    print(f"{2-attempt}회 더 재시도합니다...")
+                    await asyncio.sleep(1)  # 1초 대기 후 재시도
+                else:
+                    print("모든 재시도 실패")
+        
+        # 모든 재시도 실패 시
+        return f"검색 중 오류 발생 (총 {max_retries + 1}회 시도): {str(last_error)}", False
+    
     try:
         # 회사 방향성 주입
-        direction = '모든 업무와 프로젝트에 AI를 기본 적용할 줄 아는 AI 기본 역량을 갖춘 사내 구성원' # get_company_direction()
+        direction = '모든 업무와 프로젝트에 AI를 기본 적용할 줄 아는 AI 기본 역량을 갖춘 사내 구성원'
+        # direction = get_company_direction()
 
         career_summary = state.get('career_summary', '')
         user_query = state.get('input_query', '')
@@ -649,15 +782,21 @@ async def future_career_recommend(state: DevelopState) -> DevelopState:
             "analysis_result": tech_analysis_result.content
         })
 
-        # 3단계: 키워드 기반 최신 내용 검색
-        # 키워드를 리스트로 변환
+        # 3단계: 키워드 기반 최신 내용 검색 (재시도 로직 포함)
         extracted_keywords = [kw.strip() for kw in keywords_result.content.split(',')]
         
-        # 3단계: 다중 소스 병렬 검색 (GitHub, Reddit, Tavily)
-        search_results = await trend_analysis_for_keywords(extracted_keywords)
+        # 재시도 로직으로 검색 실행
+        formatted_search_results, search_success = await search_with_retry(extracted_keywords, max_retries=2)
         
-        # 검색 결과를 텍스트로 포맷팅
-        formatted_search_results = format_search_results(search_results)
+        # 검색 결과가 없으면 특별 메시지 반환
+        if not search_success:
+            return {
+                **state,
+                'result': {
+                    'text': '검색된 결과가 없습니다. 더 많은 정보를 포함하여 질의를 보내주세요.'
+                },
+                'messages': AIMessage('검색된 결과가 없습니다. 더 많은 정보를 포함하여 질의를 보내주세요.')
+            }
 
         # 4단계: 15년 후 미래 직무 추천
         future_job_template = PromptTemplate(
@@ -688,7 +827,8 @@ async def future_career_recommend(state: DevelopState) -> DevelopState:
             },
             'error': f'미래 직무 추천 중 오류 발생: {str(e)}'
         }
-
+    
+    
 def chat_summary(state: DevelopState) -> DevelopState:
     llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
     chat_summary_prompttamplate = PromptTemplate(
