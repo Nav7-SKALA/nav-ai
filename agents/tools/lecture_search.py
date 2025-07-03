@@ -54,6 +54,7 @@ class EmbeddingModel:
 def lecture_search(query: str) -> list:
     """vectorDB에서 정보 검색 도구"""
     try:
+        print("DEBUG확인하자 9:35분")
         print(f"DEBUG - lecture_search query: '{query}'")
         print(f"DEBUG - LEC_COLLECTION_NAME: {os.getenv('LEC_COLLECTION_NAME')}")
         
