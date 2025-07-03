@@ -16,7 +16,7 @@ from config import BASE_DIR, DB_DIR
 sys.path.append(BASE_DIR)
 sys.path.append(DB_DIR)
 
-from db.mongo import get_rolemodel_data, get_latest_chat_summary
+from db.mongo import get_rolemodel_data
 from mentor_chat_summary import chat_summary
 from db.postgres import get_company_direction, get_career_summary
 
@@ -75,7 +75,11 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
         mentee_info = get_career_summary(user_id)
         
         # 매번 이전 대화 기록 가져오기
-        conversation_history = get_latest_chat_summary(session_id)
+        conversation_history = mentor_info["chatSummary"]
+        print("=====이전 대화 기록 확인해보자=====")
+        print(conversation_history)
+        print("=================================")
+    
 
         # 프롬프트 설정
         mentor_chat_prompt = """
@@ -158,7 +162,7 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
 if __name__ == "__main__":
     # 실제 DB 데이터 테스트
     user_id = "1"  # PostgreSQL에 있는 실제 사용자 ID
-    session_id = "test_session_001"  # MongoDB 세션 ID
+    session_id = "6677cfde-941b-4a5a-bf27-0aa04a212c16"  # MongoDB 세션 ID
     rolemodel_id = "6863baadfefc0f239caad583"  # MongoDB에 있는 실제 롤모델 ID
     
     print("=== 실제 DB 데이터로 멘토 채팅 테스트 ===")
