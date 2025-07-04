@@ -46,7 +46,7 @@ def get_topN_info(query_text, user_id, top_n, grade=None, years=False):
     collection = client.get_collection(name=collection_name)
 
     # 임베딩 생성
-    embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"))
+    embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
     query_embedding = embedding_model.encode([query_text]).tolist()
 
     # 필터 구성
@@ -149,7 +149,7 @@ def get_topN_emp(query_text, user_id, top_n):
     try:
         client = get_chroma_client()
         collection = client.get_collection(name=os.getenv("JSON_HISTORY_COLLECTION_NAME"))
-        embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"))
+        embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
         query_embedding = embedding_model.encode([query_text]).tolist()
         
         results = collection.query(query_embeddings=query_embedding, n_results=20, include=['metadatas'])

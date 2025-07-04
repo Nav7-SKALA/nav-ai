@@ -1,5 +1,5 @@
 from agents.main_chatbot.prompt import exception_prompt, intent_prompt, rewrite_prompt, rag_prompt, \
-                                        keyword_prompt, chat_summary_prompt, trend_prompt
+                                        keyword_prompt, chat_summary_prompt
 from agents.main_chatbot.prompt import similar_analysis_prompt, career_recommend_prompt, \
                                        tech_extraction_prompt, future_search_prompt, future_job_prompt,integration_prompt,\
                                        internal_expert_mento_prompt, search_keyword_prompt, external_expert_mento_prompt
@@ -15,7 +15,6 @@ from langchain_openai import ChatOpenAI
 
 from vector_store.chroma_search import find_best_match, get_topN_info
 from agents.tools.trend_search import trend_analysis_for_keywords, parse_keywords, format_search_results, tavily_search_for_keywords, trend_search
-from agents.tools.tavily_search import search_tavily
 from agents.tools.lecture_search import lecture_recommend
 import json, asyncio
 

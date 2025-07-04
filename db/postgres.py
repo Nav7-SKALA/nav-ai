@@ -38,6 +38,8 @@ def get_career_summary(member_id: str):
         if conn:
             conn.close()
 
+
+
 def get_company_direction():
     # PostgreSQL 연결
     conn = psycopg2.connect(os.getenv("POSTGRES_URL"))
