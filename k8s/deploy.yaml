@@ -20,7 +20,7 @@ spec:
         - name: nav7-ai
 
 
-          image: amdp-registry.skala-ai.com/skala25a/sk-nav7-ai:1.0.0-4-e9e1988e2301
+          image: amdp-registry.skala-ai.com/skala25a/sk-nav7-ai:1.0.0-5-cf600b81ef57
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
