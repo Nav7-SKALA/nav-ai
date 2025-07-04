@@ -1,7 +1,5 @@
 
 import os
-import re
-import datetime
 from sentence_transformers import SentenceTransformer
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
@@ -63,7 +61,7 @@ def get_topN_info(query_text, user_id, top_n, grade=None, years=False):
         # 연차 필터링
         if years:
             entry_year = get_user_entry_year(user_id)
-            cutoff_year = entry_year - 3
+            cutoff_year = entry_year - 1
             where_filter = {
                 "$and": [
                     {"입사년도": {"$gte": cutoff_year}},
@@ -145,68 +143,6 @@ def get_topN_info(query_text, user_id, top_n, grade=None, years=False):
     # print(f"📊 최종 정보 길이: {len(info)} 문자")
     return info
 
-# def get_topN_info(query_text, user_id, top_n, grade=False, years=False):
-#     """(LLM 위한) 상위 n명 간단 정보"""
-#     client = get_chroma_client()
-#     collection_name = os.getenv("JSON_HISTORY_COLLECTION_NAME")
-#     collection = client.get_collection(name=collection_name)
-
-#     embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"))
-#     query_embedding = embedding_model.encode([query_text]).tolist()
-    
-#     if grade:
-#         ### TODO: grade filtering
-#         results = ''
-#     elif years:
-#         ### TODO: 사용자 연차와 유사한 구성원 필터링
-#         results = ''
-#     else:
-#         results = collection.query(query_embeddings=query_embedding, n_results=20, include=['metadatas'])
-
-#     # 중복 제거로 n명 선택
-#     seen = set()
-#     topN = []
-#     for meta in results['metadatas'][0]:
-
-#         emp_id = meta['사번']
-#         if emp_id not in seen and emp_id != user_id:
-#             seen.add(emp_id)
-#             topN.append(emp_id)
-#             if len(topN) == top_n:
-
-#                 break
-    
-#     # 각 profileId별 전체 경력 정보 구성
-#     info = ""
-
-#     for i, profile_id in enumerate(topN, 1):
-#         # 해당 profileId의 모든 경력 데이터 가져오기
-#         emp_data = collection.get(where={"profileId": profile_id}, include=['metadatas'])
-        
-#         if not emp_data['metadatas']:
-#             continue
-            
-#         first_meta = emp_data['metadatas'][0]
-        
-#         info += f"\n{i}. profileId: {profile_id}\n"
-#         info += f"   사번: {first_meta['사번']}\n"
-#         info += f"   Grade: {first_meta['grade']}\n"
-#         info += f"   입사년도: {first_meta['입사년도']}\n"
-#         info += f"   경력흐름:\n"
-        
-#         # 연차순으로 정렬해서 경력 흐름 구성
-#         careers = sorted(emp_data['metadatas'], key=lambda x: x['연차'])
-        
-#         for j, career in enumerate(careers, 1):
-#             info += f"     {j}. {career['연차']} - {career['역할']}\n"
-#             info += f"        스킬셋: {career['스킬셋']}\n"
-#             info += f"        도메인: {career['도메인']}\n"
-#             info += f"        프로젝트규모: {career['프로젝트규모']}\n"
-#             info += f"        요약: {career['요약']}\n"
-        
-#         info += "-" * 50 + "\n"
-    
-#     return info
 
 def get_topN_emp(query_text, user_id, top_n):
     """(roleModel agent 위한) 상위 n명 추출 - 개선된 버전"""

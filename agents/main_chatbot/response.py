@@ -61,10 +61,10 @@ def format_text_with_newlines(text: str) -> str:
     sentence_end_pattern = r'([.!?])(\s+)(?=[A-Za-z가-힣])'
         
     # 문장 끝에 개행 문자 추가
-    formatted_text = re.sub(sentence_end_pattern, r'\1\n', text)
+    formatted_text = re.sub(sentence_end_pattern, r'\1\n\n', text)
         
     # 연속된 개행 문자 정리 (최대 2개까지만)
-    formatted_text = re.sub(r'\n{3,}', '\n\n', formatted_text)
+    # formatted_text = re.sub(r'\n{3,}', '\n\n', formatted_text)
         
     return formatted_text.strip()
 
@@ -148,14 +148,10 @@ class RoleModelGroup(BaseModel):
 class GroupedRoleModelResult(BaseModel):
     """그룹화된 롤모델 결과"""
     analysis_summary: str = Field(description="전체 분석 요약")
-    total_employees: int = Field(description="분석한 총 사원 수")
     groups: List[RoleModelGroup] = Field(description="생성된 롤모델 그룹들 (2-4개)")
     analysis_summary: str = Field(
         default='',
         description="전체 분석 요약")
-    # total_employees: int = Field(
-    #     default=0,
-    #     description="분석한 총 사원 수")
     groups: List[RoleModelGroup] = Field(
         default=[],
         description="생성된 롤모델 그룹들 (3개)")
