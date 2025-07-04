@@ -42,6 +42,6 @@ torch
 torchvision
 torchaudio
 # sentence-transformers 라이브러리
-sentence-transformers==2.6.1
+sentence-transformers==4.1.0 #2.6.1
 pymongo==4.13.2
 psycopg2-binary==2.9.10

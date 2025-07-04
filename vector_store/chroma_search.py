@@ -1,7 +1,7 @@
 
 import os
-# from sentence_transformers import SentenceTransformer
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from sentence_transformers import SentenceTransformer
+# from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -16,31 +16,32 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# def get_safe_embedding_model():
-#     """안전하게 임베딩 모델 로드(sentenceTransformer version)"""
-#     model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
-    
-#     # 모델의 파라미터가 meta tensor인지 확인하고 처리
-#     for module in model.modules():
-#         if hasattr(module, 'parameters'):
-#             for param in module.parameters():
-#                 if param.is_meta:
-#                     # meta tensor를 실제 tensor로 변환
-#                     module.to_empty(device='cpu')
-#                     break
-    
-#     return model
 def get_safe_embedding_model():
-    """LangChain HuggingFace 임베딩 모델 반환"""
-    embeddings = HuggingFaceEmbeddings(
-        model_name=os.getenv("EMBEDDING_MODEL_NAME"),
-        model_kwargs={'device': 'cpu'},
-        encode_kwargs={
-            'normalize_embeddings': True, 
-            # 'clean_up_tokenization_spaces': False
-        }
-    )
-    return embeddings
+    """안전하게 임베딩 모델 로드(sentenceTransformer version)"""
+    model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
+    
+    # 모델의 파라미터가 meta tensor인지 확인하고 처리
+    for module in model.modules():
+        if hasattr(module, 'parameters'):
+            for param in module.parameters():
+                if param.is_meta:
+                    # meta tensor를 실제 tensor로 변환
+                    module.to_empty(device='cpu')
+                    break
+
+    return model
+
+# def get_safe_embedding_model():
+#     """LangChain HuggingFace 임베딩 모델 반환"""
+#     embeddings = HuggingFaceEmbeddings(
+#         model_name=os.getenv("EMBEDDING_MODEL_NAME"),
+#         model_kwargs={'device': 'cpu'},
+#         encode_kwargs={
+#             'normalize_embeddings': True, 
+#             # 'clean_up_tokenization_spaces': False
+#         }
+#     )
+#     return embeddings
 
 
 def find_best_match(query_text: str, user_id: str):
@@ -73,11 +74,11 @@ def get_topN_info(query_text, user_id, top_n, grade=None, years=False):
     client = get_chroma_client()
     collection_name = os.getenv("JSON_HISTORY_COLLECTION_NAME")
     collection = client.get_collection(name=collection_name)
-
+    print('------------임베딩 생성 시작---------------')
     # 임베딩 생성
     embedding_model = get_safe_embedding_model() #SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
     query_embedding = [embedding_model.embed_query(query_text)] #embedding_model.encode([query_text]).tolist()
-
+    print('------------임베딩 생성 완료---------------')
     # 필터 구성
     where_filter = None
     if grade is not None or years:
