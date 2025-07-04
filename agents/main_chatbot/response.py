@@ -61,10 +61,10 @@ def format_text_with_newlines(text: str) -> str:
     sentence_end_pattern = r'([.!?])(\s+)(?=[A-Za-z가-힣])'
         
     # 문장 끝에 개행 문자 추가
-    formatted_text = re.sub(sentence_end_pattern, r'\1\n', text)
+    formatted_text = re.sub(sentence_end_pattern, r'\1\n\n', text)
         
     # 연속된 개행 문자 정리 (최대 2개까지만)
-    formatted_text = re.sub(r'\n{3,}', '\n\n', formatted_text)
+    # formatted_text = re.sub(r'\n{3,}', '\n\n', formatted_text)
         
     return formatted_text.strip()
 
