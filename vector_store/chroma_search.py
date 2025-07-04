@@ -14,6 +14,23 @@ from dotenv import load_dotenv
 # 환경 변수 로드
 load_dotenv()
 
+
+def get_safe_embedding_model():
+    """안전하게 임베딩 모델 로드"""
+    model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
+    
+    # 모델의 파라미터가 meta tensor인지 확인하고 처리
+    for module in model.modules():
+        if hasattr(module, 'parameters'):
+            for param in module.parameters():
+                if param.is_meta:
+                    # meta tensor를 실제 tensor로 변환
+                    module.to_empty(device='cpu')
+                    break
+    
+    return model
+
+
 def find_best_match(query_text: str, user_id: str):
     """쿼리에 가장 적합한 인재 찾기"""
     
@@ -46,7 +63,7 @@ def get_topN_info(query_text, user_id, top_n, grade=None, years=False):
     collection = client.get_collection(name=collection_name)
 
     # 임베딩 생성
-    embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
+    embedding_model = get_safe_embedding_model() #SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
     query_embedding = embedding_model.encode([query_text]).tolist()
 
     # 필터 구성
@@ -149,7 +166,7 @@ def get_topN_emp(query_text, user_id, top_n):
     try:
         client = get_chroma_client()
         collection = client.get_collection(name=os.getenv("JSON_HISTORY_COLLECTION_NAME"))
-        embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
+        embedding_model = get_safe_embedding_model() #SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
         query_embedding = embedding_model.encode([query_text]).tolist()
         
         results = collection.query(query_embeddings=query_embedding, n_results=20, include=['metadatas'])
