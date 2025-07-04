@@ -219,7 +219,6 @@ def path(state: DevelopState) -> DevelopState:
 
 
 ### role_model 생성 관련 노드 (비동기)
-
 # 비동기 처리
 async def run_in_thread(func, *args, **kwargs):
     """동기 함수를 스레드에서 비동기로 실행"""
