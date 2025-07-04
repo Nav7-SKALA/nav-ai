@@ -55,6 +55,11 @@ spec:
                 secretKeyRef:
                   name: nav-ai-secret
                   key: JSON_HISTORY_COLLECTION_NAME
+            - name: LEC_COLLECTION_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: nav-ai-secret
+                  key: LEC_COLLECTION_NAME
             - name: MODEL_NAME
               valueFrom:
                 secretKeyRef:
