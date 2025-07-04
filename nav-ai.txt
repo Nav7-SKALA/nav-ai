@@ -1,0 +1,123 @@
+.
+├── Dockerfile
+├── Jenkinsfile
+├── README.md
+├── agents
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   └── __init__.cpython-311.pyc
+│   ├── main_chatbot
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-311.pyc
+│   │   │   ├── agent.cpython-311.pyc
+│   │   │   ├── career_summary_agent.cpython-311.pyc
+│   │   │   ├── career_title_agent.cpython-311.pyc
+│   │   │   ├── cdgraph.cpython-311.pyc
+│   │   │   ├── config.cpython-311.pyc
+│   │   │   ├── developstate.cpython-311.pyc
+│   │   │   ├── exception_agent.cpython-311.pyc
+│   │   │   ├── graph.cpython-311.pyc
+│   │   │   ├── learning_path_agent.cpython-311.pyc
+│   │   │   ├── prompt.cpython-311.pyc
+│   │   │   ├── response.cpython-311.pyc
+│   │   │   ├── role_model_agent.cpython-311.pyc
+│   │   │   └── supervisor_agent.cpython-311.pyc
+│   │   ├── agent.py
+│   │   ├── career_summary_agent.py
+│   │   ├── career_title_agent.py
+│   │   ├── cdgraph.py
+│   │   ├── config.py
+│   │   ├── developstate.py
+│   │   ├── exception_agent.py
+│   │   ├── graph.py
+│   │   ├── learning_path_agent.py
+│   │   ├── prompt.py
+│   │   ├── prompt_v0.py
+│   │   ├── response.py
+│   │   ├── role_model_agent.py
+│   │   └── supervisor_agent.py
+│   ├── mentor_chat
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-311.pyc
+│   │   │   ├── config.cpython-311.pyc
+│   │   │   ├── mentor_chat_agent.cpython-311.pyc
+│   │   │   ├── mentor_chat_summary.cpython-311.pyc
+│   │   │   └── sample_data.cpython-311.pyc
+│   │   ├── config.py
+│   │   ├── mentor_chat_agent.py
+│   │   ├── mentor_chat_summary.py
+│   │   └── sample_data.py
+│   └── tools
+│       ├── __init__.py
+│       ├── __pycache__
+│       │   ├── __init__.cpython-311.pyc
+│       │   ├── config.cpython-311.pyc
+│       │   ├── github_search.cpython-311.pyc
+│       │   ├── google_news_tool.cpython-311.pyc
+│       │   ├── lecture_search.cpython-311.pyc
+│       │   ├── postgres_tool.cpython-311.pyc
+│       │   ├── reddit_search.cpython-311.pyc
+│       │   ├── search_coursera_courses.cpython-311.pyc
+│       │   ├── tavily_search.cpython-311.pyc
+│       │   ├── tavily_search_tool.cpython-311.pyc
+│       │   └── trend_search.cpython-311.pyc
+│       ├── config.py
+│       ├── github_search.py
+│       ├── google_news_tool.py
+│       ├── lecture_search.py
+│       ├── postgres_tool.py
+│       ├── reddit_search.py
+│       ├── search_coursera_courses.py
+│       ├── tavily_search.py
+│       ├── tavily_search_tool.py
+│       └── trend_search.py
+├── api
+│   ├── __pycache__
+│   │   └── config.cpython-311.pyc
+│   ├── config.py
+│   ├── fastserver.py
+│   └── requirements.txt
+├── config
+│   └── db_config.py
+├── db
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── mongo.cpython-311.pyc
+│   │   └── postgres.cpython-311.pyc
+│   ├── mongo.py
+│   └── postgres.py
+├── k8s
+│   ├── configmap.yaml
+│   ├── deploy.yaml
+│   └── service.yaml
+├── nav-ai.txt
+├── poetry.lock
+├── pyproject.toml
+├── test.ipynb
+├── test.py
+├── test_trend.py
+└── vector_store
+    ├── SKALA전달용_College등록과정_v.0.1.xlsx
+    ├── SKALA전달용_mySUNI 과정리스트_v.0.1.xlsx
+    ├── SKALA전달용_구성원성장history_v.0.2_250530.xlsx
+    ├── __init__.py
+    ├── __pycache__
+    │   ├── __init__.cpython-311.pyc
+    │   ├── chroma_client.cpython-311.pyc
+    │   ├── chroma_search.cpython-311.pyc
+    │   ├── config.cpython-311.pyc
+    │   └── upsert_profile_vector.cpython-311.pyc
+    ├── chroma_client.py
+    ├── chroma_search.py
+    ├── config.py
+    ├── employee_save.py
+    ├── lecture_save.py
+    ├── mysuni_save.py
+    ├── processed_emp_data.py
+    ├── processed_json_data.py
+    └── upsert_profile_vector.py
+
+17 directories, 104 files

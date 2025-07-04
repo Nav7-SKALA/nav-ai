@@ -64,19 +64,28 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
         
         # 롤모델 데이터 가져오기
         mentor_info = get_rolemodel_data(rolemodel_id)
+        print(f"[DEBUG] mentor_info: {mentor_info}")
+        if not mentor_info:
+            print("[DEBUG] mentor_info is None")
         
         mentor_data = json.loads(mentor_info["info"])
         mentor_safe_str = str(mentor_data).replace('{', '{{').replace('}', '}}')
         
         # 회사 방향성 가져오기
         direction_data = get_company_direction()
+        print(f"[DEBUG] direction_data: {direction_data}")
         
         # 멘티 데이터 가져오기
         mentee_info = get_career_summary(user_id)
+        print(f"[DEBUG] mentee_info: {mentee_info}")
         
         # 매번 이전 대화 기록 가져오기
         session_data = get_session_data(session_id)
         conversation_history = session_data["summary"] 
+        print(f"[DEBUG] session_data: {session_data}")
+        if not session_data:
+            print("[DEBUG] session_data is None")
+            conversation_history = "이전 대화 내용이 없습니다."
         
         # print("=====이전 대화 기록 확인해보자=====")
         # print(conversation_history)
@@ -141,9 +150,17 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
         })
         
         # chat_summary 진행
-        summary_result = chat_summary(response.content)
-        # print("chech summary result", summary_result)
-        # print("="*60)
+        print("[DEBUG] Starting chat_summary...")
+        if conversation_history and conversation_history != "이전 대화 내용이 없습니다.":
+            # 이전 대화 기록이 있으면 함께 요약
+            combined_content = f"{conversation_history}\n\n{response.content}"
+            print(f"[DEBUG] combined_content: {combined_content}")
+            summary_result = chat_summary(combined_content)
+        else:
+            # 이전 대화 기록이 없으면 현재 응답만 요약
+            summary_result = chat_summary(response.content)
+        print(f"[DEBUG] Summary result: {summary_result}")
+
         return {
             "user_id": user_id,
             "chat_summary": summary_result,
