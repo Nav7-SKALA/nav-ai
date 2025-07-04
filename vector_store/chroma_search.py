@@ -231,7 +231,6 @@ def llm_select(query_text, candidates):
 
 
 def get_multiple_employees_detail(emp_ids):
-    # TODO: experience, certification 추가해야 함
     """선택된 여러 사원들의 상세 정보를 합쳐서 반환"""
     client = get_chroma_client()
     collection = client.get_collection(name=os.getenv("JSON_HISTORY_COLLECTION_NAME"))
