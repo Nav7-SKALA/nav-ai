@@ -17,7 +17,7 @@ load_dotenv()
 
 
 # def get_safe_embedding_model():
-#     """안전하게 임베딩 모델 로드"""
+#     """안전하게 임베딩 모델 로드(sentenceTransformer version)"""
 #     model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
     
 #     # 모델의 파라미터가 meta tensor인지 확인하고 처리
@@ -37,7 +37,7 @@ def get_safe_embedding_model():
         model_kwargs={'device': 'cpu'},
         encode_kwargs={
             'normalize_embeddings': True, 
-            'clean_up_tokenization_spaces': False
+            # 'clean_up_tokenization_spaces': False
         }
     )
     return embeddings
