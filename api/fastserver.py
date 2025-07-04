@@ -363,6 +363,7 @@ async def rolemodel_chat(request: RoleModelRequest):
         
         return RoleModelResponse(**result)
     except Exception as e:
+        print(f"[ERROR] Exception occurred: {str(e)} -> 이건 fastapi쪽 에러")
         return RoleModelResponse(
             user_id=request.user_id,
             chat_summary="",
@@ -376,7 +377,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=8000)
+    parser.add_argument('--port', type=int, default=8001)
     args = parser.parse_args()
     
     uvicorn.run(app, host="0.0.0.0", port=args.port)

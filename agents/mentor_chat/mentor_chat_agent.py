@@ -81,11 +81,13 @@ def chat_with_mentor(user_id: str, input_query: str, session_id: str, rolemodel_
         
         # 매번 이전 대화 기록 가져오기
         session_data = get_session_data(session_id)
-        conversation_history = session_data["summary"] 
         print(f"[DEBUG] session_data: {session_data}")
-        if not session_data:
+
+        if not session_data:  # 👍 먼저 None 체크
             print("[DEBUG] session_data is None")
             conversation_history = "이전 대화 내용이 없습니다."
+        else:
+            conversation_history = session_data.get("summary", "이전 대화 내용이 없습니다.")
         
         # print("=====이전 대화 기록 확인해보자=====")
         # print(conversation_history)
