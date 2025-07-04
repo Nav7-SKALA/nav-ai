@@ -149,9 +149,9 @@ class ProfileRequest(BaseModel):
     ])
 
 class RoleModelRequest(BaseModel):
-    user_id: str = Field(..., example="testId123")
+    user_id: str = Field(..., example="1")
     input_query: str = Field(..., example="백엔드 개발 전문가가 되는 과정 중에 어떤 게 가장 힘드셨나요?")
-    session_id: Optional[str] = Field(..., example="sessionID123") # mongoDB sessionID (롤모델 저장 되어 있는)
+    session_id: Optional[str] = Field(..., example="6677cfde-941b-4a5a-bf27-0aa04a212c16") # mongoDB sessionID (롤모델 저장 되어 있는)
     rolemodel_id: str = Field(..., example="6863baadfefc0f239caad583") # rolemodel_id
 
 class RoleModelResponse(BaseModel):
