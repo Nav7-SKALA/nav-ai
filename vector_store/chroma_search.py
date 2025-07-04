@@ -31,17 +31,21 @@ def get_safe_embedding_model():
 
     return model
 
-# def get_safe_embedding_model():
-#     """LangChain HuggingFace 임베딩 모델 반환"""
-#     embeddings = HuggingFaceEmbeddings(
-#         model_name=os.getenv("EMBEDDING_MODEL_NAME"),
-#         model_kwargs={'device': 'cpu'},
-#         encode_kwargs={
-#             'normalize_embeddings': True, 
-#             # 'clean_up_tokenization_spaces': False
-#         }
-#     )
-#     return embeddings
+def get_embedding_model():
+    global _embedding_model
+    
+    if _embedding_model is None:
+        # 🔥 추가 안전 설정
+        os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:64'
+        
+        print("🔄 임베딩 모델 로드 중...")
+        _embedding_model = SentenceTransformer(
+            os.getenv("EMBEDDING_MODEL_NAME"),
+            device='cpu'
+        )
+        print("✅ 임베딩 모델 로드 완료")
+    
+    return _embedding_model
 
 
 def find_best_match(query_text: str, user_id: str):
@@ -76,8 +80,8 @@ def get_topN_info(query_text, user_id, top_n, grade=None, years=False):
     collection = client.get_collection(name=collection_name)
     print('------------임베딩 생성 시작---------------')
     # 임베딩 생성
-    embedding_model = get_safe_embedding_model() #SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
-    query_embedding = [embedding_model.embed_query(query_text)] #embedding_model.encode([query_text]).tolist()
+    embedding_model = get_embedding_model() #SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
+    query_embedding = embedding_model.encode([query_text]).tolist()
     print('------------임베딩 생성 완료---------------')
     # 필터 구성
     where_filter = None
@@ -179,8 +183,8 @@ def get_topN_emp(query_text, user_id, top_n):
     try:
         client = get_chroma_client()
         collection = client.get_collection(name=os.getenv("JSON_HISTORY_COLLECTION_NAME"))
-        embedding_model = get_safe_embedding_model() #SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
-        query_embedding = [embedding_model.embed_query(query_text)] #embedding_model.encode([query_text]).tolist()
+        embedding_model = get_embedding_model() #SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
+        query_embedding = embedding_model.encode([query_text]).tolist()
         
         results = collection.query(query_embeddings=query_embedding, n_results=20, include=['metadatas'])
         
