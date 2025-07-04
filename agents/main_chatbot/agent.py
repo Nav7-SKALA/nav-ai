@@ -551,40 +551,100 @@ async def role_model(state: DevelopState) -> DevelopState:
 #         }
   
 
+# async def trend(state: DevelopState) -> DevelopState:
+#     """
+#     기술 트렌드 검색과 사내 교육 추천을 통합하는 최종 함수
+#     """
+#     try:
+#         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
+#         user_query = state.get('input_query')
+#         career_summary = state.get("career_summary")
+
+        
+#         # 1. 병렬로 기술 트렌드 검색과 사내 교육 추천 실행
+#         trend_analysis, lecture_recommendation = await asyncio.gather(
+#             trend_search(user_query),             
+#             lecture_recommend(user_query,career_summary)     
+#         )
+
+#         print(f"DEBUG - trend_analysis: {trend_analysis}")
+#         print(f"DEBUG - lecture_recommendation: {lecture_recommendation}")
+
+#         trend_result = trend_analysis.get('trend_result', '')
+#         internal_course = lecture_recommendation.get('internal_course', '')
+#         ax_college = lecture_recommendation.get('ax_college', '')
+#         explanation = lecture_recommendation.get('explanation', '')
+
+#         print(f"DEBUG - extracted ax_college: {ax_college} -> 이게 최종적으로 반환되고 있는 값" )
+
+#         # 4. 통합 분석 실행
+#         integration_template = PromptTemplate(
+#             input_variables=["career_summary", "trend_result", "internal_course","ax_college", "explanation"],
+#             template=integration_prompt
+#         )
+        
+#         integration_chain = integration_template | llm
+#         final_result = integration_chain.invoke({
+#             "career_summary": state.get("career_summary"),
+#             "trend_result": trend_result,
+#             "internal_course": internal_course,
+#             "ax_college": ax_college,
+#             "explanation": explanation
+#         })
+        
+#         return {
+#             **state,
+#             'result': {'text': final_result.content,
+#                        'ax_college': ax_college},
+#             'messages': AIMessage(final_result.content)
+#         }     
+        
+#     except Exception as e:
+#         # 오류 처리
+#         error_message = f"통합 분석 중 오류 발생: {str(e)}"
+#         return {
+#             **state,
+#             'result': {'text': error_message,
+#                        'ax_college': error_message},
+#             'messages': AIMessage(error_message)
+#         }
 async def trend(state: DevelopState) -> DevelopState:
-    """
-    기술 트렌드 검색과 사내 교육 추천을 통합하는 최종 함수
-    """
     try:
         llm = ChatOpenAI(model=MODEL_NAME, temperature=TEMPERATURE)
         user_query = state.get('input_query')
         career_summary = state.get("career_summary")
 
+        print(f"DEBUG - trend 함수 시작, user_query: {user_query}")
         
-        # 1. 병렬로 기술 트렌드 검색과 사내 교육 추천 실행
+        # 병렬 실행
         trend_analysis, lecture_recommendation = await asyncio.gather(
             trend_search(user_query),             
             lecture_recommend(user_query,career_summary)     
         )
 
-        print(f"DEBUG - trend_analysis: {trend_analysis}")
-        print(f"DEBUG - lecture_recommendation: {lecture_recommendation}")
-
+        print(f"DEBUG - trend_analysis 결과: {type(trend_analysis)}")
+        print(f"DEBUG - lecture_recommendation 결과: {type(lecture_recommendation)}")
+        
+        # 데이터 추출
         trend_result = trend_analysis.get('trend_result', '')
         internal_course = lecture_recommendation.get('internal_course', '')
         ax_college = lecture_recommendation.get('ax_college', '')
         explanation = lecture_recommendation.get('explanation', '')
-
-        print(f"DEBUG - extracted ax_college: {ax_college} -> 이게 최종적으로 반환되고 있는 값" )
-
-        # 4. 통합 분석 실행
+        
+        print(f"DEBUG - 추출된 데이터 확인:")
+        print(f"  - trend_result 길이: {len(trend_result) if trend_result else 0}")
+        print(f"  - internal_course 길이: {len(internal_course) if internal_course else 0}")
+        print(f"  - ax_college: '{ax_college}'")
+        
+        # integration 실행
         integration_template = PromptTemplate(
             input_variables=["career_summary", "trend_result", "internal_course","ax_college", "explanation"],
             template=integration_prompt
         )
         
-        # integration_chain = integration_template | llm.with_structured_output(TrendResult)
         integration_chain = integration_template | llm
+        
+        print(f"DEBUG - integration_chain 호출 시작")
         final_result = integration_chain.invoke({
             "career_summary": state.get("career_summary"),
             "trend_result": trend_result,
@@ -593,22 +653,22 @@ async def trend(state: DevelopState) -> DevelopState:
             "explanation": explanation
         })
         
+        print(f"DEBUG - integration_chain 성공")
+        print(f"DEBUG - final_result type: {type(final_result)}")
+        
         return {
             **state,
             'result': {'text': final_result.content,
                        'ax_college': ax_college},
             'messages': AIMessage(final_result.content)
         }
-        # return{
-        #     **state,
-        #     'result': {'text': final_result.text,
-        #                'ax_college': final_result.ax_college},
-        #     'messages': AIMessage(final_result.text)
-        # }
-        
         
     except Exception as e:
-        # 오류 처리
+        print(f"DEBUG - trend 함수에서 오류 발생: {str(e)}")
+        print(f"DEBUG - 오류 타입: {type(e)}")
+        import traceback
+        print(f"DEBUG - Full traceback: {traceback.format_exc()}")
+        
         error_message = f"통합 분석 중 오류 발생: {str(e)}"
         return {
             **state,
@@ -616,7 +676,6 @@ async def trend(state: DevelopState) -> DevelopState:
                        'ax_college': error_message},
             'messages': AIMessage(error_message)
         }
-
     
 
 # async def future_career_recommend(state: DevelopState) -> DevelopState:
