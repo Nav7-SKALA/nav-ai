@@ -179,7 +179,9 @@ def path(state: DevelopState) -> DevelopState:
     """
     try:
         # info = find_best_match(state.get('rag_query',''),state.get('user_id',''))
+        # direction = '모든 업무와 프로젝트에 AI를 기본 적용할 줄 아는 AI 기본 역량을 갖춘 사내 구성원' 
         direction = get_company_direction()
+        print(f"회사 방향성: {direction}")
         path_recommend_prompt = PromptTemplate(
         input_variables=["internal_employee", "career_summary", "user_query", "role", "job", "skill_set", "direction"],
         template=career_recommend_prompt

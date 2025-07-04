@@ -43,11 +43,11 @@ class SimilarRoadmapProjectBlock(BaseModel):
 
 class SimilarRoadmapExperienceBlock(BaseModel):
     """경험 블록"""
-    experience: List[SimilarRoadmapExperience]
+    experience: List[SimilarRoadmapExperience] = Field(default=[])
 
 class SimilarRoadmapCertificationBlock(BaseModel):
     """자격증 블록"""
-    certification: List[SimilarRoadmapCertification]
+    certification: List[SimilarRoadmapCertification] = Field(default=[])
 
 
 import re
@@ -142,8 +142,12 @@ class RoleModelGroup(BaseModel):
     role_model: RoleModelProfile = Field(description="그룹 대표 롤모델")
     real_info: List[Any] = Field(default=[], description="그룹에 속한 사원의 chromaDB ID")
     common_project : List[str] = Field(description="그룹에 속한 사원들의 주요 수행 프로젝트")
-    common_experience : List[str] = Field(description="그룹에 속한 사원들의 프로젝트 외 경력 관련 경험(예: 컨퍼런스 참여) 정보")
-    common_cert : List[str] = Field(description="그룹에 속한 사원들의 경력 관련 자격증 정보")
+    common_experience : List[str] = Field(
+        default=[],
+        description="그룹에 속한 사원들의 프로젝트 외 경력 관련 경험(예: 컨퍼런스 참여) 정보")
+    common_cert : List[str] = Field(
+        default=[],
+        description="그룹에 속한 사원들의 경력 관련 자격증 정보")
 
 class GroupedRoleModelResult(BaseModel):
     """그룹화된 롤모델 결과"""
