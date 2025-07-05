@@ -64,6 +64,7 @@ python-dotenv==1.0.1
 langchain-community==0.2.15
 langsmith==0.1.108
 praw==7.7.1
+accelerate==0.21.0 
 sentence-transformers==3.3.1
 pymongo==4.13.2
 psycopg2-binary==2.9.10
