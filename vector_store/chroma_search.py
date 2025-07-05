@@ -1,6 +1,6 @@
 
 import os
-# from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer
 # from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
@@ -15,22 +15,22 @@ from dotenv import load_dotenv
 # 환경 변수 로드
 load_dotenv()
 
-from langchain_huggingface import HuggingFaceEmbeddings
+# from langchain_huggingface import HuggingFaceEmbeddings
 
-_embedding_model = None
+# _embedding_model = None
 
-def get_embedding_model():
-    global _embedding_model
+# def get_embedding_model():
+#     global _embedding_model
     
-    if _embedding_model is None:
-        print("🔄 LangChain HuggingFace 임베딩 로드 중...")
-        _embedding_model = HuggingFaceEmbeddings(
-            model_name=os.getenv("EMBEDDING_MODEL_NAME"),
-            model_kwargs={'device': 'cpu'}
-        )
-        print("✅ 임베딩 모델 로드 완료")
+#     if _embedding_model is None:
+#         print("🔄 LangChain HuggingFace 임베딩 로드 중...")
+#         _embedding_model = HuggingFaceEmbeddings(
+#             model_name=os.getenv("EMBEDDING_MODEL_NAME"),
+#             model_kwargs={'device': 'cpu'}
+#         )
+#         print("✅ 임베딩 모델 로드 완료")
     
-    return _embedding_model
+#     return _embedding_model
 
 
 
@@ -64,11 +64,9 @@ def get_topN_info(query_text, user_id, top_n, grade=None, years=False):
     client = get_chroma_client()
     collection_name = os.getenv("JSON_HISTORY_COLLECTION_NAME")
     collection = client.get_collection(name=collection_name)
-    print('------------임베딩 생성 시작---------------')
     # 임베딩 생성
-    embedding_model = get_embedding_model() #SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
-    query_embedding = [embedding_model.embed_query(query_text)] #embedding_model.encode([query_text]).tolist()
-    print('------------임베딩 생성 완료---------------')
+    embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
+    query_embedding = embedding_model.encode([query_text]).tolist()
     # 필터 구성
     where_filter = None
     if grade is not None or years:
@@ -169,7 +167,7 @@ def get_topN_emp(query_text, user_id, top_n):
     try:
         client = get_chroma_client()
         collection = client.get_collection(name=os.getenv("JSON_HISTORY_COLLECTION_NAME"))
-        embedding_model = get_embedding_model() #SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
+        embedding_model = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"), device='cpu')
         query_embedding = [embedding_model.embed_query(query_text)] #embedding_model.encode([query_text]).tolist()
         
         results = collection.query(query_embeddings=query_embedding, n_results=20, include=['metadatas'])
