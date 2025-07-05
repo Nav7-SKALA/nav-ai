@@ -43,7 +43,11 @@ ENV PYTHONPATH=/app:/app/api:/app/agents:/app/agents/main_chatbot:/app/tools
 COPY api/requirements.txt ./requirements.txt
 
 RUN pip install --no-cache-dir --upgrade pip
-RUN pip install torch==2.0.1+cpu torchvision==0.15.2+cpu torchaudio==2.0.2+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+
+# 🔥 PyTorch CPU 버전 설치 (LangChain이 내부적으로 사용)
+RUN pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
+
+# 🔥 나머지 패키지 설치 (sentence-transformers 없이)
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
